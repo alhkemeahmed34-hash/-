@@ -56,12 +56,8 @@ export default function App() {
     try {
       if (authMode === "signup") {
         if (!fullName.trim()) throw new Error("اكتب الاسم الكامل.");
-        const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { full_name: fullName.trim() } } });
+        const { data, error } = await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { full_name: fullName.trim(), phone: phone.trim() || null } } });
         if (error) throw error;
-        if (data.user) {
-          const { error: profileError } = await supabase.from("profiles").upsert({ id: data.user.id, full_name: fullName.trim(), phone: phone.trim() || null });
-          if (profileError) throw profileError;
-        }
         Alert.alert("تم إنشاء الحساب", data.session ? "أهلاً بك في تسنيم." : "تحقق من بريدك الإلكتروني لتأكيد الحساب، ثم سجل الدخول.");
         setAuthMode("login");
       } else {
