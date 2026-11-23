@@ -153,6 +153,14 @@ export default function App() {
       <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>
       <Button title="تحديث الحجوزات" onPress={loadBookings}/>
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
+      {(role==="owner" || (session.user.app_metadata?.permissions ?? []).includes("services.manage")) && <Button secondary title="إضافة خدمة أو برنامج" onPress={()=>setServiceOpen(!serviceOpen)}/>}
+      {serviceOpen && <View style={s.panel}><Text style={s.section}>إضافة خدمة جديدة</Text><Text style={s.muted}>اختر القسم</Text>
+        {services.map(item=><Pressable key={item.category} onPress={()=>setServiceCategory(item.category)} style={s.permissionRow}><Text style={{color:serviceCategory===item.category?C.green:C.muted,fontWeight:"900"}}>{serviceCategory===item.category?"✓":"○"}</Text><Text style={s.choiceTitle}>{item.title}</Text></Pressable>)}
+        <Field value={serviceTitle} onChangeText={setServiceTitle} placeholder="اسم البرنامج أو الخدمة"/>
+        <Field value={serviceDescription} onChangeText={setServiceDescription} placeholder="وصف مختصر"/>
+        <Field value={servicePrice} onChangeText={setServicePrice} placeholder="السعر بالريال اليمني (اختياري)" keyboardType="numeric"/>
+        <Button title="حفظ الخدمة" onPress={createTravelService} disabled={busy}/>
+      </View>}
       {staffOpen && <View style={s.panel}><Text style={s.section}>حساب موظف جديد</Text><Field value={staffName} onChangeText={setStaffName} placeholder="اسم الموظف"/><Field value={staffEmail} onChangeText={setStaffEmail} placeholder="بريد الموظف" keyboardType="email-address"/><Field value={staffPassword} onChangeText={setStaffPassword} placeholder="كلمة مرور مؤقتة (10 أحرف فأكثر)" secureTextEntry/>
         <Text style={s.muted}>حدد صلاحيات الموظف:</Text>
         {allPermissions.map(p=><Pressable key={p} onPress={()=>setStaffPermissions(old=>old.includes(p)?old.filter(x=>x!==p):[...old,p])} style={s.permissionRow}><Text style={{color:staffPermissions.includes(p)?C.green:C.muted,fontWeight:"900"}}>{staffPermissions.includes(p)?"✓":"○"}</Text><Text style={s.choiceTitle}>{permissionLabels[p]}</Text></Pressable>)}
