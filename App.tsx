@@ -60,6 +60,10 @@ export default function App() {
 
   const role = (session?.user.app_metadata?.role as Role | undefined) ?? "customer";
   const isStaff = role === "staff" || role === "owner";
+  const permissions: string[] = session?.user.app_metadata?.permissions ?? [];
+  const canReadBookings = role === "owner" || permissions.includes("bookings.read");
+  const canUpdateBookings = role === "owner" || permissions.includes("bookings.update");
+  const canManageServices = role === "owner" || permissions.includes("services.manage");
 
   async function authenticate() {
     if (!email.trim() || password.length < 8) { Alert.alert("تحقق من البيانات", "أدخل البريد وكلمة المرور (8 أحرف على الأقل)."); return; }
@@ -171,9 +175,11 @@ export default function App() {
         <Text style={s.muted}>حدد صلاحيات الموظف:</Text>
         {allPermissions.map(p=><Pressable key={p} onPress={()=>setStaffPermissions(old=>old.includes(p)?old.filter(x=>x!==p):[...old,p])} style={s.permissionRow}><Text style={{color:staffPermissions.includes(p)?C.green:C.muted,fontWeight:"900"}}>{staffPermissions.includes(p)?"✓":"○"}</Text><Text style={s.choiceTitle}>{permissionLabels[p]}</Text></Pressable>)}
         <Button title="إنشاء الحساب" onPress={createStaff} disabled={busy}/></View>}
-      <Text style={s.section}>الحجوزات</Text>
-      {bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.customer_name} · {b.customer_phone}</Text><Text style={s.muted}>الخدمة: {b.service_category} · الحالة: {b.status}</Text><Text style={s.muted}>{b.details?.notes || "بدون ملاحظات"}</Text>{(role==="owner" || (session.user.app_metadata?.permissions ?? []).includes("bookings.update")) && <View style={s.statusActions}><Pressable onPress={()=>changeBookingStatus(b.id,"confirmed")}><Text style={s.statusText}>تأكيد</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"under_review")}><Text style={s.statusText}>قيد المراجعة</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"rejected")}><Text style={s.statusText}>رفض</Text></Pressable></View>}</View>)}
-      {!bookings.length && <Text style={s.note}>اضغط تحديث الحجوزات لعرض الطلبات. الوصول يخضع لسياسات قاعدة البيانات.</Text>}
+      {canReadBookings ? <>
+        <Text style={s.section}>الحجوزات</Text>
+        {bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.customer_name} · {b.customer_phone}</Text><Text style={s.muted}>الخدمة: {b.service_category} · الحالة: {b.status}</Text><Text style={s.muted}>{b.details?.notes || "بدون ملاحظات"}</Text>{canUpdateBookings && <View style={s.statusActions}><Pressable onPress={()=>changeBookingStatus(b.id,"confirmed")}><Text style={s.statusText}>تأكيد</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"under_review")}><Text style={s.statusText}>قيد المراجعة</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"rejected")}><Text style={s.statusText}>رفض</Text></Pressable></View>}</View>)}
+        {!bookings.length && <Text style={s.note}>لا توجد حجوزات محمّلة. اضغط تحديث الحجوزات.</Text>}
+      </> : <Text style={s.note}>ليس لديك صلاحية عرض الحجوزات.</Text>}
     </> : <>
       <View style={s.hero}><Text style={s.heroEyebrow}>اكتشف العالم مع تسنيم</Text><Text style={s.heroTitle}>رحلتك القادمة تبدأ بخطوة</Text><Text style={s.heroSub}>خطط لرحلتك ودع تفاصيل السفر علينا</Text><Text style={s.plane}>✈️</Text></View>
       <Text style={s.section}>ماذا تخطط لرحلتك؟</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={[s.service,selected.category===item.category&&s.serviceSelected]} onPress={()=>{setSelected(item);setBookingOpen(true);}}><Text style={s.serviceIcon}>{item.icon}</Text><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text></Pressable>)}</View>
