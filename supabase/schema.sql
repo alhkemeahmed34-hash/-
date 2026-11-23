@@ -100,3 +100,41 @@ with check (coalesce(auth.jwt() -> 'app_metadata' ->> 'role', '') in ('owner','s
 
 -- No customer DELETE policy: preserve booking history.
 -- Staff/owner account provisioning and role assignment must happen server-side.
+
+
+-- Additional production setup applied to the dedicated TASNIM TRAVEL project.
+-- Private passport storage; never make this bucket public.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('passport-documents', 'passport-documents', false, 10485760, array['image/jpeg','image/png','application/pdf'])
+on conflict (id) do update set public = false, file_size_limit = 10485760, allowed_mime_types = array['image/jpeg','image/png','application/pdf'];
+
+create policy "profile_insert_self" on public.profiles for insert to authenticated
+with check (id = (select auth.uid()));
+
+create or replace function public.has_staff_permission(permission_name text)
+returns boolean language sql stable security invoker set search_path = ''
+as $$
+  select coalesce((select auth.jwt()) -> 'app_metadata' ->> 'role', '') = 'owner'
+    or (coalesce((select auth.jwt()) -> 'app_metadata' ->> 'role', '') = 'staff'
+      and coalesce((select auth.jwt()) -> 'app_metadata' -> 'permissions', '[]'::jsonb) ? permission_name);
+$$;
+revoke all on function public.has_staff_permission(text) from public;
+grant execute on function public.has_staff_permission(text) to anon, authenticated;
+
+create or replace function public.handle_new_auth_user()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, full_name, phone)
+  values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', ''), nullif(new.raw_user_meta_data ->> 'phone', ''))
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+drop trigger if exists on_auth_user_created_profile on auth.users;
+create trigger on_auth_user_created_profile after insert on auth.users
+for each row execute function public.handle_new_auth_user();
+revoke all on function public.handle_new_auth_user() from public, anon, authenticated;
+
+-- Staff roles and permissions must only be assigned by trusted server-side admin code.
+-- Never let the mobile client update auth.users.raw_app_meta_data or app_metadata.
