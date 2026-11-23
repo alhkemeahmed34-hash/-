@@ -138,3 +138,52 @@ revoke all on function public.handle_new_auth_user() from public, anon, authenti
 
 -- Staff roles and permissions must only be assigned by trusted server-side admin code.
 -- Never let the mobile client update auth.users.raw_app_meta_data or app_metadata.
+
+
+-- Enforce staff permissions in database policies (not only in the mobile UI).
+-- Drop earlier broad staff policies before installing permission-aware policies.
+drop policy if exists "profile_read_self_or_staff" on public.profiles;
+create policy "profile_read_self_or_authorized_staff"
+on public.profiles for select to authenticated
+using (
+  id = (select auth.uid())
+  or public.has_staff_permission('customers.read')
+);
+
+drop policy if exists "services_read_active" on public.travel_services;
+create policy "services_read_active_or_authorized_staff"
+on public.travel_services for select to authenticated
+using (
+  is_active = true
+  or public.has_staff_permission('services.read')
+  or public.has_staff_permission('services.manage')
+);
+create policy "services_read_active_anon"
+on public.travel_services for select to anon
+using (is_active = true);
+
+drop policy if exists "services_manage_staff" on public.travel_services;
+create policy "services_insert_authorized_staff"
+on public.travel_services for insert to authenticated
+with check (public.has_staff_permission('services.manage'));
+create policy "services_update_authorized_staff"
+on public.travel_services for update to authenticated
+using (public.has_staff_permission('services.manage'))
+with check (public.has_staff_permission('services.manage'));
+create policy "services_delete_authorized_staff"
+on public.travel_services for delete to authenticated
+using (public.has_staff_permission('services.manage'));
+
+drop policy if exists "bookings_customer_read_own" on public.bookings;
+create policy "bookings_customer_read_own_or_authorized_staff"
+on public.bookings for select to authenticated
+using (
+  customer_id = (select auth.uid())
+  or public.has_staff_permission('bookings.read')
+);
+
+drop policy if exists "bookings_staff_update" on public.bookings;
+create policy "bookings_update_authorized_staff"
+on public.bookings for update to authenticated
+using (public.has_staff_permission('bookings.update'))
+with check (public.has_staff_permission('bookings.update'));
