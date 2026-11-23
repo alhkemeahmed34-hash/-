@@ -14,7 +14,8 @@ type Role = "customer" | "staff" | "owner";
 type Service = { icon: string; title: string; category: string; subtitle: string };
 const services: Service[] = [
   { icon: "✈️", title: "الطيران", category: "flight", subtitle: "ابحث عن رحلتك" },
-  { icon: "🕋", title: "الحج والعمرة", category: "umrah", subtitle: "برامج إيمانية" },
+  { icon: "🕋", title: "العمرة", category: "umrah", subtitle: "برامج إيمانية" },
+  { icon: "🕋", title: "الحج", category: "hajj", subtitle: "برامج الحج" },
   { icon: "🌍", title: "السياحة", category: "tourism", subtitle: "اكتشف وجهات جديدة" },
   { icon: "🏨", title: "الفنادق", category: "hotel", subtitle: "إقامة تناسبك" },
   { icon: "🛂", title: "التأشيرات", category: "visa", subtitle: "خدمات التأشيرات" },
@@ -44,13 +45,18 @@ export default function App() {
   const allPermissions = ["bookings.read","bookings.update","services.read","services.manage","customers.read","reports.read"];
   const permissionLabels: Record<string,string> = {"bookings.read":"عرض الحجوزات","bookings.update":"تحديث الحجوزات","services.read":"عرض الخدمات","services.manage":"إدارة الخدمات والأسعار","customers.read":"عرض بيانات العملاء","reports.read":"عرض التقارير"};
   const [staffPermissions, setStaffPermissions] = useState<string[]>(["bookings.read","bookings.update","services.read"]);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false); const [catalog, setCatalog] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({data}) => { setSession(data.session); setLoading(false); });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!session) { setCatalog([]); return; }
+    supabase.from("travel_services").select("id,category,title,description,price,currency").eq("is_active", true).order("created_at", {ascending:false}).then(({data}) => setCatalog(data ?? []));
+  }, [session]);
 
   const role = (session?.user.app_metadata?.role as Role | undefined) ?? "customer";
   const isStaff = role === "staff" || role === "owner";
@@ -171,6 +177,7 @@ export default function App() {
     </> : <>
       <View style={s.hero}><Text style={s.heroEyebrow}>اكتشف العالم مع تسنيم</Text><Text style={s.heroTitle}>رحلتك القادمة تبدأ بخطوة</Text><Text style={s.heroSub}>خطط لرحلتك ودع تفاصيل السفر علينا</Text><Text style={s.plane}>✈️</Text></View>
       <Text style={s.section}>ماذا تخطط لرحلتك؟</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={[s.service,selected.category===item.category&&s.serviceSelected]} onPress={()=>{setSelected(item);setBookingOpen(true);}}><Text style={s.serviceIcon}>{item.icon}</Text><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text></Pressable>)}</View>
+      {catalog.length>0 && <><Text style={s.section}>برامج وعروض المكتب</Text>{catalog.map(item=><Pressable key={item.id} style={s.booking} onPress={()=>{setSelected({icon:"✨",title:item.title,category:item.category,subtitle:item.description});setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.description || "اضغط لإرسال طلب حجز"}</Text><Text style={s.price}>{item.price===null?"تواصل لمعرفة السعر":Number(item.price).toLocaleString()+" "+item.currency}</Text></Pressable>)}</>}
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)"/><Button title={busy?"جارٍ الإرسال...":"إرسال طلب الحجز"} onPress={createBooking} disabled={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
       <Button secondary title="عرض حجوزاتي" onPress={loadBookings}/>{bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.service_category} · {b.status}</Text><Text style={s.muted}>{new Date(b.created_at).toLocaleDateString()}</Text></View>)}<View style={s.promo}><Text style={s.choiceTitle}>نرتب رحلتك بكل عناية</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك.</Text></View>
     </>}
@@ -194,5 +201,5 @@ const s=StyleSheet.create({
  section:{color:C.text,textAlign:"right",fontWeight:"900",fontSize:18,marginTop:13,marginBottom:12},
  grid:{flexDirection:"row-reverse",flexWrap:"wrap",justifyContent:"space-between"},service:{width:"48%",backgroundColor:C.white,padding:15,borderRadius:17,marginBottom:11,borderWidth:1,borderColor:C.border},serviceSelected:{borderColor:C.blue,backgroundColor:C.sky},serviceIcon:{fontSize:26,textAlign:"right",marginBottom:8},
  promo:{backgroundColor:"#E2F2F9",padding:17,borderRadius:17,marginTop:17},stats:{flexDirection:"row",gap:10,marginVertical:15},stat:{flex:1,backgroundColor:C.white,padding:15,borderRadius:15,alignItems:"center"},statNum:{color:C.blue,fontSize:24,fontWeight:"900",marginBottom:4},
- booking:{backgroundColor:C.white,padding:15,borderRadius:14,marginTop:9,borderWidth:1,borderColor:C.border},permissionRow:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.border},statusActions:{flexDirection:"row-reverse",justifyContent:"space-around",marginTop:12},statusText:{color:C.blue,fontWeight:"800",fontSize:12}
+ booking:{backgroundColor:C.white,padding:15,borderRadius:14,marginTop:9,borderWidth:1,borderColor:C.border},permissionRow:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.border},statusActions:{flexDirection:"row-reverse",justifyContent:"space-around",marginTop:12},statusText:{color:C.blue,fontWeight:"800",fontSize:12},price:{color:C.green,textAlign:"right",fontWeight:"900",marginTop:5}
 });
