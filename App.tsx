@@ -160,10 +160,10 @@ export default function App() {
     <View style={s.top}><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View><View style={s.avatar}><Text>👤</Text></View></View>
     {isStaff ? <>
       <Text style={s.heading}>لوحة إدارة المكتب</Text><Text style={s.muted}>صلاحية الحساب: {role==="owner"?"المدير الرئيسي":"موظف"}</Text>
-      <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>
-      <Button title="تحديث الحجوزات" onPress={loadBookings}/>
+      {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>}
+      {canReadBookings && <Button title="تحديث الحجوزات" onPress={loadBookings}/>}
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
-      {(role==="owner" || (session.user.app_metadata?.permissions ?? []).includes("services.manage")) && <Button secondary title="إضافة خدمة أو برنامج" onPress={()=>setServiceOpen(!serviceOpen)}/>}
+      {canManageServices && <Button secondary title="إضافة خدمة أو برنامج" onPress={()=>setServiceOpen(!serviceOpen)}/>}
       {serviceOpen && <View style={s.panel}><Text style={s.section}>إضافة خدمة جديدة</Text><Text style={s.muted}>اختر القسم</Text>
         {services.map(item=><Pressable key={item.category} onPress={()=>setServiceCategory(item.category)} style={s.permissionRow}><Text style={{color:serviceCategory===item.category?C.green:C.muted,fontWeight:"900"}}>{serviceCategory===item.category?"✓":"○"}</Text><Text style={s.choiceTitle}>{item.title}</Text></Pressable>)}
         <Field value={serviceTitle} onChangeText={setServiceTitle} placeholder="اسم البرنامج أو الخدمة"/>
