@@ -1,3 +1,4 @@
+import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
 import { Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
