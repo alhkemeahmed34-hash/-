@@ -158,6 +158,7 @@ using (
   or public.has_staff_permission('services.read')
   or public.has_staff_permission('services.manage')
 );
+drop policy if exists "services_read_active_anon" on public.travel_services;
 create policy "services_read_active_anon"
 on public.travel_services for select to anon
 using (is_active = true);
