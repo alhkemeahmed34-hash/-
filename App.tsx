@@ -39,6 +39,9 @@ export default function App() {
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
   const [bookings, setBookings] = useState<any[]>([]); const [staffOpen, setStaffOpen] = useState(false);
   const [staffName, setStaffName] = useState(""); const [staffEmail, setStaffEmail] = useState(""); const [staffPassword, setStaffPassword] = useState("");
+  const allPermissions = ["bookings.read","bookings.update","services.read","services.manage","customers.read","reports.read"];
+  const permissionLabels: Record<string,string> = {"bookings.read":"عرض الحجوزات","bookings.update":"تحديث الحجوزات","services.read":"عرض الخدمات","services.manage":"إدارة الخدمات والأسعار","customers.read":"عرض بيانات العملاء","reports.read":"عرض التقارير"};
+  const [staffPermissions, setStaffPermissions] = useState<string[]>(["bookings.read","bookings.update","services.read"]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -91,6 +94,10 @@ export default function App() {
     if (error) Alert.alert("تعذر إرسال الطلب", msg(error));
     else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); }
   }
+  async function changeBookingStatus(id: string, status: string) {
+    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    if (error) Alert.alert("تعذر تحديث الحجز", msg(error)); else loadBookings();
+  }
   async function loadBookings() {
     const { data, error } = await supabase.from("bookings").select("id,customer_name,customer_phone,service_category,status,created_at,details").order("created_at", {ascending:false}).limit(50);
     if (error) Alert.alert("تعذر تحميل الحجوزات", msg(error)); else setBookings(data ?? []);
@@ -100,11 +107,11 @@ export default function App() {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke("create-staff", { body: {
       full_name: staffName.trim(), email: staffEmail.trim().toLowerCase(), password: staffPassword,
-      permissions: ["bookings.read","bookings.update","services.read","services.manage","customers.read","reports.read"]
+      permissions: staffPermissions
     }});
     setBusy(false);
     if (error || data?.error) Alert.alert("تعذر إنشاء الحساب", data?.error ?? msg(error));
-    else { Alert.alert("تم إنشاء حساب الموظف", "تم إنشاء الحساب وتأكيد بريده. أرسل للموظف بيانات الدخول بشكل آمن."); setStaffName(""); setStaffEmail(""); setStaffPassword(""); setStaffOpen(false); }
+    else { Alert.alert("تم إنشاء حساب الموظف", "تم إنشاء الحساب وتأكيد بريده. أرسل للموظف بيانات الدخول بشكل آمن."); setStaffName(""); setStaffEmail(""); setStaffPassword(""); setStaffPermissions(["bookings.read","bookings.update","services.read"]); setStaffOpen(false); }
   }
 
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
@@ -131,15 +138,18 @@ export default function App() {
       <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>
       <Button title="تحديث الحجوزات" onPress={loadBookings}/>
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
-      {staffOpen && <View style={s.panel}><Text style={s.section}>حساب موظف جديد</Text><Field value={staffName} onChangeText={setStaffName} placeholder="اسم الموظف"/><Field value={staffEmail} onChangeText={setStaffEmail} placeholder="بريد الموظف" keyboardType="email-address"/><Field value={staffPassword} onChangeText={setStaffPassword} placeholder="كلمة مرور مؤقتة (10 أحرف فأكثر)" secureTextEntry/><Button title="إنشاء الحساب" onPress={createStaff} disabled={busy}/></View>}
+      {staffOpen && <View style={s.panel}><Text style={s.section}>حساب موظف جديد</Text><Field value={staffName} onChangeText={setStaffName} placeholder="اسم الموظف"/><Field value={staffEmail} onChangeText={setStaffEmail} placeholder="بريد الموظف" keyboardType="email-address"/><Field value={staffPassword} onChangeText={setStaffPassword} placeholder="كلمة مرور مؤقتة (10 أحرف فأكثر)" secureTextEntry/>
+        <Text style={s.muted}>حدد صلاحيات الموظف:</Text>
+        {allPermissions.map(p=><Pressable key={p} onPress={()=>setStaffPermissions(old=>old.includes(p)?old.filter(x=>x!==p):[...old,p])} style={s.permissionRow}><Text style={{color:staffPermissions.includes(p)?C.green:C.muted,fontWeight:"900"}}>{staffPermissions.includes(p)?"✓":"○"}</Text><Text style={s.choiceTitle}>{permissionLabels[p]}</Text></Pressable>)}
+        <Button title="إنشاء الحساب" onPress={createStaff} disabled={busy}/></View>}
       <Text style={s.section}>الحجوزات</Text>
-      {bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.customer_name} · {b.customer_phone}</Text><Text style={s.muted}>الخدمة: {b.service_category} · الحالة: {b.status}</Text><Text style={s.muted}>{b.details?.notes || "بدون ملاحظات"}</Text></View>)}
+      {bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.customer_name} · {b.customer_phone}</Text><Text style={s.muted}>الخدمة: {b.service_category} · الحالة: {b.status}</Text><Text style={s.muted}>{b.details?.notes || "بدون ملاحظات"}</Text>{(role==="owner" || (session.user.app_metadata?.permissions ?? []).includes("bookings.update")) && <View style={s.statusActions}><Pressable onPress={()=>changeBookingStatus(b.id,"confirmed")}><Text style={s.statusText}>تأكيد</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"under_review")}><Text style={s.statusText}>قيد المراجعة</Text></Pressable><Pressable onPress={()=>changeBookingStatus(b.id,"rejected")}><Text style={s.statusText}>رفض</Text></Pressable></View>}</View>)}
       {!bookings.length && <Text style={s.note}>اضغط تحديث الحجوزات لعرض الطلبات. الوصول يخضع لسياسات قاعدة البيانات.</Text>}
     </> : <>
       <View style={s.hero}><Text style={s.heroEyebrow}>اكتشف العالم مع تسنيم</Text><Text style={s.heroTitle}>رحلتك القادمة تبدأ بخطوة</Text><Text style={s.heroSub}>خطط لرحلتك ودع تفاصيل السفر علينا</Text><Text style={s.plane}>✈️</Text></View>
       <Text style={s.section}>ماذا تخطط لرحلتك؟</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={[s.service,selected.category===item.category&&s.serviceSelected]} onPress={()=>{setSelected(item);setBookingOpen(true);}}><Text style={s.serviceIcon}>{item.icon}</Text><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text></Pressable>)}</View>
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)"/><Button title={busy?"جارٍ الإرسال...":"إرسال طلب الحجز"} onPress={createBooking} disabled={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
-      <View style={s.promo}><Text style={s.choiceTitle}>نرتب رحلتك بكل عناية</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك.</Text></View>
+      <Button secondary title="عرض حجوزاتي" onPress={loadBookings}/>{bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.service_category} · {b.status}</Text><Text style={s.muted}>{new Date(b.created_at).toLocaleDateString()}</Text></View>)}<View style={s.promo}><Text style={s.choiceTitle}>نرتب رحلتك بكل عناية</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك.</Text></View>
     </>}
     <Button secondary title="تسجيل الخروج" onPress={signOut}/>
   </ScrollView></SafeAreaView>;
@@ -161,5 +171,5 @@ const s=StyleSheet.create({
  section:{color:C.text,textAlign:"right",fontWeight:"900",fontSize:18,marginTop:13,marginBottom:12},
  grid:{flexDirection:"row-reverse",flexWrap:"wrap",justifyContent:"space-between"},service:{width:"48%",backgroundColor:C.white,padding:15,borderRadius:17,marginBottom:11,borderWidth:1,borderColor:C.border},serviceSelected:{borderColor:C.blue,backgroundColor:C.sky},serviceIcon:{fontSize:26,textAlign:"right",marginBottom:8},
  promo:{backgroundColor:"#E2F2F9",padding:17,borderRadius:17,marginTop:17},stats:{flexDirection:"row",gap:10,marginVertical:15},stat:{flex:1,backgroundColor:C.white,padding:15,borderRadius:15,alignItems:"center"},statNum:{color:C.blue,fontSize:24,fontWeight:"900",marginBottom:4},
- booking:{backgroundColor:C.white,padding:15,borderRadius:14,marginTop:9,borderWidth:1,borderColor:C.border}
+ booking:{backgroundColor:C.white,padding:15,borderRadius:14,marginTop:9,borderWidth:1,borderColor:C.border},permissionRow:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.border},statusActions:{flexDirection:"row-reverse",justifyContent:"space-around",marginTop:12},statusText:{color:C.blue,fontWeight:"800",fontSize:12}
 });
