@@ -188,3 +188,6 @@ create policy "bookings_update_authorized_staff"
 on public.bookings for update to authenticated
 using (public.has_staff_permission('bookings.update'))
 with check (public.has_staff_permission('bookings.update'));
+
+drop policy if exists "bookings_customer_or_authorized_staff_read" on public.bookings;
+drop policy if exists "bookings_authorized_staff_update" on public.bookings;
