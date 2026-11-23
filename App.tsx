@@ -38,6 +38,7 @@ export default function App() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]);
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
+  const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("flight");
   const [bookings, setBookings] = useState<any[]>([]); const [staffOpen, setStaffOpen] = useState(false);
   const [staffName, setStaffName] = useState(""); const [staffEmail, setStaffEmail] = useState(""); const [staffPassword, setStaffPassword] = useState("");
   const allPermissions = ["bookings.read","bookings.update","services.read","services.manage","customers.read","reports.read"];
@@ -102,6 +103,19 @@ export default function App() {
   async function loadBookings() {
     const { data, error } = await supabase.from("bookings").select("id,customer_name,customer_phone,service_category,status,created_at,details").order("created_at", {ascending:false}).limit(50);
     if (error) Alert.alert("تعذر تحميل الحجوزات", msg(error)); else setBookings(data ?? []);
+  }
+  async function createTravelService() {
+    if (!serviceTitle.trim()) { Alert.alert("بيانات الخدمة", "اكتب اسم الخدمة أو البرنامج."); return; }
+    const price = servicePrice.trim() ? Number(servicePrice) : null;
+    if (price !== null && (!Number.isFinite(price) || price < 0)) { Alert.alert("السعر غير صحيح", "أدخل سعراً صحيحاً أو اتركه فارغاً."); return; }
+    setBusy(true);
+    const { error } = await supabase.from("travel_services").insert({
+      category: serviceCategory, title: serviceTitle.trim(), description: serviceDescription.trim(),
+      price, currency: "YER", is_active: true, created_by: session?.user.id
+    });
+    setBusy(false);
+    if (error) Alert.alert("تعذر حفظ الخدمة", msg(error));
+    else { Alert.alert("تمت إضافة الخدمة", "أصبحت الخدمة محفوظة في قاعدة البيانات."); setServiceTitle(""); setServiceDescription(""); setServicePrice(""); setServiceOpen(false); }
   }
   async function createStaff() {
     if (!staffName.trim() || !staffEmail.trim() || staffPassword.length < 10) { Alert.alert("بيانات الموظف", "أدخل الاسم والبريد وكلمة مرور من 10 أحرف على الأقل."); return; }
