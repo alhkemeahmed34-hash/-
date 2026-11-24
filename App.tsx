@@ -1,6 +1,6 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
-import { Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, Dimensions } from "react-native";
+import { Alert, BackHandler, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, Dimensions } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, Session } from "@supabase/supabase-js";
 
@@ -114,6 +114,21 @@ export default function App() {
     finally { setBusy(false); }
   }
 
+  useEffect(() => {
+    if (!session) return;
+    const onHardwareBack = () => {
+      if (bookingOpen) { setBookingOpen(false); return true; }
+      if (serviceOpen) { setServiceOpen(false); return true; }
+      if (staffOpen) { setStaffOpen(false); return true; }
+      if (!isStaff && detail) { setDetail(null); return true; }
+      if (!isStaff && tab !== "home") { setTab("home"); setDetail(null); return true; }
+      Alert.alert("تسنيم للسياحة والسفريات", "أنت في الصفحة الرئيسية. استخدم زر تسجيل الخروج إذا أردت الخروج من حسابك.", [{ text: "حسنًا", style: "cancel" }]);
+      return true;
+    };
+    const subscription = BackHandler.addEventListener("hardwareBackPress", onHardwareBack);
+    return () => subscription.remove();
+  }, [session, bookingOpen, serviceOpen, staffOpen, isStaff, detail, tab]);
+
   async function signOut() { await supabase.auth.signOut(); setEntry(null); setBookingOpen(false); setStaffOpen(false); setBookings([]); }
   async function createBooking() {
     if (!session) return;
@@ -188,6 +203,7 @@ export default function App() {
       <Text style={s.heading}>لوحة إدارة المكتب</Text><Text style={s.muted}>صلاحية الحساب: {role==="owner"?"المدير الرئيسي":"موظف"}</Text>
       {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>}
       {canReadBookings && <Button title="تحديث الحجوزات" onPress={loadBookings}/>}
+      <Button secondary title="تسجيل الخروج" onPress={signOut}/>
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
       {canManageServices && <Button secondary title="إضافة خدمة أو برنامج" onPress={()=>setServiceOpen(!serviceOpen)}/>}
       {serviceOpen && <View style={s.panel}><Text style={s.section}>إضافة خدمة جديدة</Text><Text style={s.muted}>اختر القسم</Text>
