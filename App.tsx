@@ -30,11 +30,7 @@ const heroSlides = [
 
 function BrandEmblem({ size=92 }: { size?: number }) {
   return <View accessibilityLabel="شعار تسنيم للسياحة والسفريات" style={{width:size,height:size,borderRadius:size*0.3,backgroundColor:C.navy,borderWidth:2,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-    <View style={{position:"absolute",width:size*0.82,height:size*0.82,borderRadius:size,borderWidth:1,borderColor:"#77B8A8"}}/>
-    <View style={{position:"absolute",width:size*0.65,height:size*0.65,borderRadius:size,borderWidth:1.5,borderColor:C.gold,borderLeftColor:"transparent",transform:[{rotate:"-35deg"}]}}/>
-    <Text style={{position:"absolute",top:size*0.09,color:C.gold,fontSize:size*0.2,fontWeight:"900"}}>✈</Text>
-    <Text style={{fontSize:size*0.43,color:C.white,fontWeight:"900",lineHeight:size*0.52,includeFontPadding:false}}>ت</Text>
-    <Text style={{position:"absolute",bottom:size*0.09,color:"#E8D6A6",fontSize:size*0.085,fontWeight:"900",letterSpacing:1}}>TRAVEL</Text>
+    <Image source={require("./assets/tasnim-icon.png")} style={{width:"100%",height:"100%"}} resizeMode="contain"/>
   </View>;
 }
 function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
