@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0B5555"/><stop offset="1" stop-color="#062F36"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3D995"/><stop offset="1" stop-color="#B88A3E"/></linearGradient>
+</defs>
+<rect width="1024" height="1024" rx="240" fill="url(#bg)"/>
+<circle cx="512" cy="512" r="390" fill="none" stroke="#78B9A8" stroke-width="18" opacity=".8"/>
+<circle cx="512" cy="512" r="332" fill="none" stroke="url(#gold)" stroke-width="15"/>
+<path d="M190 512h644M512 180v664M285 285c145 130 145 324 0 454M739 285c-145 130-145 324 0 454" fill="none" stroke="#78B9A8" stroke-width="12" opacity=".55"/>
+<path d="M512 315c-93 0-154 70-154 159v220h104V487c0-37 18-59 50-59s50 22 50 59v207h104V474c0-89-61-159-154-159z" fill="#F5F2E8"/>
+<path d="M512 172c-14 72-42 128-89 169l68 18-13 79 34-24 34 24-13-79 68-18c-47-41-75-97-89-169z" fill="url(#gold)" transform="translate(0,-8) scale(.72) translate(199,70)"/>
+<path d="M333 748c96 50 262 50 358 0" fill="none" stroke="url(#gold)" stroke-width="20" stroke-linecap="round"/>
+<text x="512" y="850" text-anchor="middle" font-family="Arial,sans-serif" font-size="62" font-weight="700" letter-spacing="12" fill="#E9D39A">TASNIM</text>
+</svg>
