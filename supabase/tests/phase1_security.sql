@@ -31,6 +31,13 @@ insert into auth.users (
   pg_catalog.now(),
   '{"role":"staff","permissions":[]}'::jsonb,
   '{"full_name":"Phase 1 Limited"}'::jsonb, pg_catalog.now(), pg_catalog.now()
+),
+(
+  '10000000-0000-0000-0000-000000000005',
+  'authenticated', 'authenticated', 'phase1-staff-updater@example.invalid', '',
+  pg_catalog.now(),
+  '{"role":"staff","permissions":["bookings.update"]}'::jsonb,
+  '{"full_name":"Phase 1 Updater"}'::jsonb, pg_catalog.now(), pg_catalog.now()
 );
 
 insert into public.travel_services (
@@ -92,8 +99,10 @@ begin
     '20000000-0000-0000-0000-000000000001',
     '20000000-0000-0000-0000-000000000002'
   );
-  if visible_count <> 1 then
-    raise exception 'FAIL: customer A must see exactly one of the two bookings; got %', visible_count;
+  if visible_count <> 1
+     or not exists (select 1 from public.bookings where id = '20000000-0000-0000-0000-000000000001')
+     or exists (select 1 from public.bookings where id = '20000000-0000-0000-0000-000000000002') then
+    raise exception 'FAIL: customer A must see only booking A; got % visible test bookings', visible_count;
   end if;
 
   select count(*)::integer into visible_count
@@ -110,8 +119,10 @@ begin
   from storage.objects
   where bucket_id = 'passport-documents'
     and name like '10000000-0000-0000-0000-00000000000%/passport-%.pdf';
-  if visible_count <> 1 then
-    raise exception 'FAIL: customer A must see only their own passport file; got %', visible_count;
+  if visible_count <> 1
+     or not exists (select 1 from storage.objects where bucket_id = 'passport-documents' and name = '10000000-0000-0000-0000-000000000001/passport-a.pdf')
+     or exists (select 1 from storage.objects where bucket_id = 'passport-documents' and name = '10000000-0000-0000-0000-000000000002/passport-b.pdf') then
+    raise exception 'FAIL: customer A must see only passport A; got % visible test files', visible_count;
   end if;
 
   if pg_catalog.has_table_privilege('authenticated', 'public.bookings', 'UPDATE') then
@@ -159,16 +170,20 @@ begin
     '20000000-0000-0000-0000-000000000001',
     '20000000-0000-0000-0000-000000000002'
   );
-  if visible_count <> 1 then
-    raise exception 'FAIL: customer B must see exactly one of the two bookings; got %', visible_count;
+  if visible_count <> 1
+     or not exists (select 1 from public.bookings where id = '20000000-0000-0000-0000-000000000002')
+     or exists (select 1 from public.bookings where id = '20000000-0000-0000-0000-000000000001') then
+    raise exception 'FAIL: customer B must see only booking B; got % visible test bookings', visible_count;
   end if;
 
   select count(*)::integer into visible_count
   from storage.objects
   where bucket_id = 'passport-documents'
     and name like '10000000-0000-0000-0000-00000000000%/passport-%.pdf';
-  if visible_count <> 1 then
-    raise exception 'FAIL: customer B must see only their own passport file; got %', visible_count;
+  if visible_count <> 1
+     or not exists (select 1 from storage.objects where bucket_id = 'passport-documents' and name = '10000000-0000-0000-0000-000000000002/passport-b.pdf')
+     or exists (select 1 from storage.objects where bucket_id = 'passport-documents' and name = '10000000-0000-0000-0000-000000000001/passport-a.pdf') then
+    raise exception 'FAIL: customer B must see only passport B; got % visible test files', visible_count;
   end if;
 end;
 $test$;
@@ -192,6 +207,16 @@ begin
   );
   if visible_count <> 2 then
     raise exception 'FAIL: staff with bookings.read must see both test bookings; got %', visible_count;
+  end if;
+
+  select count(*)::integer into visible_count
+  from public.profiles
+  where id in (
+    '10000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000002'
+  );
+  if visible_count <> 2 then
+    raise exception 'FAIL: staff with customers.read must see both test profiles; got %', visible_count;
   end if;
 
   select count(*)::integer into visible_count
@@ -227,6 +252,32 @@ begin
 end;
 $test$;
 
+-- Staff with bookings.update may change only status through the RPC.
+select pg_catalog.set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000005', true);
+select pg_catalog.set_config(
+  'request.jwt.claims',
+  '{"sub":"10000000-0000-0000-0000-000000000005","role":"authenticated","app_metadata":{"role":"staff","permissions":["bookings.update"]}}',
+  true
+);
+
+do $test$
+declare booking_status text;
+begin
+  perform public.update_booking_status(
+    '20000000-0000-0000-0000-000000000001',
+    'confirmed'
+  );
+
+  select status into booking_status
+  from public.bookings
+  where id = '20000000-0000-0000-0000-000000000001';
+
+  if booking_status <> 'confirmed' then
+    raise exception 'FAIL: staff with bookings.update could not update status';
+  end if;
+end;
+$test$;
+
 reset role;
 
 -- A linked service cannot be physically deleted, even by a privileged database role.
@@ -255,7 +306,7 @@ $test$;
 do $test$
 declare
   existing_owners integer;
-  owner_fixture uuid := '10000000-0000-0000-0000-000000000005';
+  owner_fixture uuid := '10000000-0000-0000-0000-000000000006';
   blocked boolean;
 begin
   select count(*)::integer into existing_owners
