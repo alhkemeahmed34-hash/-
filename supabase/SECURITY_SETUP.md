@@ -27,17 +27,17 @@ It:
 
 ## Local verification
 
-Run the SQL smoke tests only against a disposable local Supabase database after applying the migration locally:
+This repository currently has no `supabase/config.toml`. The migration and tests are committed, but the Supabase CLI local project is not initialized here. Do not run CLI migration commands until a local configuration has been created and checked.
+
+After initializing a disposable local Supabase project and applying this migration locally, run:
 
 ```sh
-supabase start
-supabase migration up
 psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/phase1_security.sql
 ```
 
-The test file creates temporary auth users, bookings, and passport-object rows inside a transaction and rolls everything back. The last-owner destructive test is skipped if the local database already has an active owner.
+Use only the local database URL printed by your local Supabase setup; never point this test file at the hosted production database. The test file creates temporary auth users, bookings, and passport-object rows inside a transaction and rolls everything back. The last-owner destructive test is skipped if the local database already has an active owner.
 
-These tests have been authored but have **not** been executed in this environment. They do not replace Android device testing.
+These tests have been authored but have **not** been executed in this environment. This runtime has no `psql` or Supabase CLI installed, so SQL execution and migration parsing remain unverified. They do not replace Android device testing.
 
 ## Leaked-password protection
 
