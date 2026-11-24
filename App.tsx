@@ -37,7 +37,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<"login"|"signup">("login");
   const [entry, setEntry] = useState<"customer"|"staff"|null>(null);
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]);
+  const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]); const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
   const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("flight");
   const [bookings, setBookings] = useState<any[]>([]); const [staffOpen, setStaffOpen] = useState(false);
@@ -56,6 +56,12 @@ export default function App() {
   useEffect(() => {
     if (!session) { setCatalog([]); return; }
     refreshCatalog();
+    // Restore the customer's saved contact details so repeat bookings are faster.
+    supabase.from("profiles").select("full_name,phone").eq("id", session.user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setFullName(data.full_name);
+        if (data?.phone) setPhone(data.phone);
+      });
   }, [session]);
 
   async function refreshCatalog() {
@@ -106,7 +112,7 @@ export default function App() {
     if (!fullName.trim() || !phone.trim()) { Alert.alert("بيانات الحجز", "أدخل الاسم ورقم الهاتف."); return; }
     setBusy(true);
     const { error } = await supabase.from("bookings").insert({
-      customer_id: session.user.id, service_category: selected.category,
+      customer_id: session.user.id, service_id: selectedServiceId, service_category: selected.category,
       customer_name: fullName.trim(), customer_phone: phone.trim(),
       details: { service_title: selected.title, notes: bookingNotes.trim() }, status: "pending"
     });
@@ -203,14 +209,14 @@ export default function App() {
           <Text style={s.choiceTitle}>{item.title}</Text>
           <Text style={s.muted}>{item.description||"لا توجد تفاصيل إضافية حالياً"}</Text>
           <Text style={s.price}>{item.price===null?"السعر عند الاستفسار":Number(item.price).toLocaleString()+" "+item.currency}</Text>
-          <Button title="اطلب الحجز" onPress={()=>{setSelected({...detail,title:item.title});setBookingOpen(true);}}/>
+          <Button title="اطلب الحجز" onPress={()=>{setSelected({...detail,title:item.title});setSelectedServiceId(item.id);setBookingOpen(true);}}/>
         </View>)}
         {!catalog.some(x=>x.category===detail.category)&&<Text style={s.note}>لا توجد برامج مضافة حالياً. يمكنك الاستفسار من المكتب.</Text>}
       </View>}
       {tab==="bookings" && <View><Text style={s.heading}>حجوزاتي</Text><Button title="تحديث الحجوزات" onPress={loadBookings}/>{bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.details?.service_title||b.service_category}</Text><Text style={s.muted}>الحالة: {b.status} · {new Date(b.created_at).toLocaleDateString()}</Text></View>)}{!bookings.length&&<Text style={s.note}>اضغط تحديث الحجوزات لعرض طلباتك.</Text>}</View>}
-      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
+      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
       {tab==="account" && <View style={s.panel}><Text style={s.heading}>حسابي</Text><Text style={s.choiceTitle}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {session.user.user_metadata?.phone||"غير مضاف"}</Text><Button secondary title="تسجيل الخروج" onPress={signOut}/></View>}
-      {catalog.length>0 && <><Text style={s.section}>برامج وعروض المكتب</Text>{catalog.map(item=><Pressable key={item.id} style={s.booking} onPress={()=>{setSelected({image:"https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=700&auto=format&fit=crop",title:item.title,category:item.category,subtitle:item.description});setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.description || "اضغط لإرسال طلب حجز"}</Text><Text style={s.price}>{item.price===null?"تواصل لمعرفة السعر":Number(item.price).toLocaleString()+" "+item.currency}</Text></Pressable>)}</>}
+      {catalog.length>0 && <><Text style={s.section}>برامج وعروض المكتب</Text>{catalog.map(item=><Pressable key={item.id} style={s.booking} onPress={()=>{setSelected({image:"https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=700&auto=format&fit=crop",title:item.title,category:item.category,subtitle:item.description});setSelectedServiceId(item.id);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.description || "اضغط لإرسال طلب حجز"}</Text><Text style={s.price}>{item.price===null?"تواصل لمعرفة السعر":Number(item.price).toLocaleString()+" "+item.currency}</Text></Pressable>)}</>}
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)"/><Button title={busy?"جارٍ الإرسال...":"إرسال طلب الحجز"} onPress={createBooking} disabled={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
       <View style={s.promo}><Text style={s.choiceTitle}>نرتب رحلتك بكل عناية</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك.</Text></View>
     </>}
