@@ -153,42 +153,68 @@ export default function App() {
     return () => subscription.remove();
   }, [session, bookingOpen, serviceOpen, staffOpen, isStaff, detail, tab]);
 
-  async function signOut() { await supabase.auth.signOut(); setEntry(null); setBookingOpen(false); setStaffOpen(false); setBookings([]); }
+  async function signOut() {
+    setBusy(true);
+    const {error}=await supabase.auth.signOut();
+    setBusy(false);
+    if(error){Alert.alert("تعذر تسجيل الخروج",msg(error));return;}
+    setEntry(null); setBookingOpen(false); setStaffOpen(false); setBookings([]); setCatalog([]); setTab("home"); setDetail(null);
+  }
   async function createBooking() {
     if (!session) return;
     if (!fullName.trim() || !phone.trim()) { Alert.alert("بيانات الحجز", "أدخل الاسم ورقم الهاتف."); return; }
     setBusy(true);
-    const { error } = await supabase.from("bookings").insert({
-      customer_id: session.user.id, service_id: selectedServiceId, service_category: selected.category,
-      customer_name: fullName.trim(), customer_phone: phone.trim(),
-      details: { service_title: selected.title, notes: bookingNotes.trim() }, status: "pending"
-    });
-    setBusy(false);
-    if (error) Alert.alert("تعذر إرسال الطلب", msg(error));
-    else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); if (tab === "bookings") loadBookings(); }
+    try {
+      const { error } = await supabase.from("bookings").insert({
+        customer_id: session.user.id, service_id: selectedServiceId, service_category: selected.category,
+        customer_name: fullName.trim(), customer_phone: phone.trim(),
+        details: { service_title: selected.title, notes: bookingNotes.trim() }, status: "pending"
+      });
+      if (error) throw error;
+      Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى مكتب تسنيم، وسيقوم الفريق بمراجعته والتواصل معك.");
+      setBookingOpen(false); setBookingNotes("");
+      if (tab === "bookings") loadBookings();
+    } catch(error:any) { Alert.alert("تعذر إرسال الطلب",msg(error)); }
+    finally { setBusy(false); }
   }
   async function changeBookingStatus(id: string, status: string) {
+    setBusy(true);
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
-    if (error) Alert.alert("تعذر تحديث الحجز", msg(error)); else loadBookings();
+    setBusy(false);
+    if (error) Alert.alert("تعذر تحديث الحجز",msg(error)); else loadBookings();
   }
   async function loadBookings() {
-    let query = supabase.from("bookings").select("id,customer_name,customer_phone,service_category,status,created_at,details").order("created_at", {ascending:false}).limit(50);
-    if (role === "customer") query = query.eq("customer_id", session?.user.id);
-    const { data, error } = await query;
-    if (error) Alert.alert("تعذر تحميل الحجوزات", msg(error)); else setBookings(data ?? []);
+    if (!session) return;
+    setBookingsLoading(true); setBookingsError("");
+    try {
+      let query = supabase.from("bookings").select("id,customer_name,customer_phone,service_category,status,created_at,details").order("created_at", {ascending:false}).limit(50);
+      if (role === "customer") query = query.eq("customer_id", session.user.id);
+      const { data, error } = await query;
+      if (error) throw error;
+      setBookings(data ?? []);
+    } catch(error:any) { setBookingsError(msg(error)); }
+    finally { setBookingsLoading(false); }
   }
   async function createTravelService() {
     if (!serviceTitle.trim()) { Alert.alert("بيانات الخدمة", "اكتب اسم الخدمة أو البرنامج."); return; }
     const price = servicePrice.trim() ? Number(servicePrice) : null;
     if (price !== null && (!Number.isFinite(price) || price < 0)) { Alert.alert("السعر غير صحيح", "أدخل سعراً صحيحاً أو اتركه فارغاً."); return; }
+    const validDate = (value:string) => !value.trim() || /^\\d{4}-\\d{2}-\\d{2}$/.test(value.trim());
+    if (!validDate(serviceStartDate) || !validDate(serviceEndDate)) { Alert.alert("صيغة التاريخ", "اكتب التاريخ بصيغة YYYY-MM-DD أو اتركه فارغاً."); return; }
+    if (serviceStartDate && serviceEndDate && serviceEndDate < serviceStartDate) { Alert.alert("التواريخ غير صحيحة", "تاريخ النهاية يجب أن يكون بعد تاريخ البداية."); return; }
     setBusy(true);
-    const { error } = await supabase.from("travel_services").insert({
-      category: serviceCategory, title: serviceTitle.trim(), description: serviceDescription.trim(),
-      price, currency: "YER", is_active: true, created_by: session?.user.id
-    });
-    setBusy(false);
-    if (error) Alert.alert("تعذر حفظ الخدمة", msg(error));
-    else { Alert.alert("تمت إضافة الخدمة", "أصبحت الخدمة محفوظة في قاعدة البيانات."); setServiceTitle(""); setServiceDescription(""); setServicePrice(""); setServiceOpen(false); await refreshCatalog(); }
+    try {
+      const { error } = await supabase.from("travel_services").insert({
+        category: serviceCategory, title: serviceTitle.trim(), description: serviceDescription.trim(),
+        destination: serviceDestination.trim() || null, starts_at: serviceStartDate.trim() || null, ends_at: serviceEndDate.trim() || null,
+        price, currency: "YER", is_active: true, created_by: session?.user.id
+      });
+      if (error) throw error;
+      Alert.alert("تمت إضافة العرض", "تم حفظ العرض وأصبح ظاهراً للعملاء.");
+      setServiceTitle(""); setServiceDescription(""); setServiceDestination(""); setServiceStartDate(""); setServiceEndDate(""); setServicePrice(""); setServiceOpen(false);
+      await refreshCatalog();
+    } catch(error:any) { Alert.alert("تعذر حفظ العرض",msg(error)); }
+    finally { setBusy(false); }
   }
   async function deleteTravelService(id:string) { Alert.alert("حذف البرنامج","هل تريد حذف هذا البرنامج؟",[{text:"إلغاء",style:"cancel"},{text:"حذف",style:"destructive",onPress:async()=>{const {error}=await supabase.from("travel_services").delete().eq("id",id);if(error)Alert.alert("تعذر الحذف",msg(error));else setCatalog(old=>old.filter(x=>x.id!==id));}}]); }
 
@@ -206,8 +232,8 @@ export default function App() {
 
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
-  if (!session) return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.sky}/><ScrollView contentContainerStyle={s.welcome}>
-    <Image source={{uri:brandLogo}} style={s.loginLogo} resizeMode="contain"/><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
+  if (!session) return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.sky}/><ScrollView contentContainerStyle={s.welcome} keyboardShouldPersistTaps="handled">
+    <View style={s.loginBrandMark}><Text style={s.loginBrandLetter}>T</Text></View><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
     {!entry ? <View style={s.panel}><Text style={s.heading}>مرحباً بك</Text><Text style={s.muted}>اختر نوع الدخول للمتابعة</Text>
       <Pressable style={s.choice} onPress={()=>{setEntry("customer");setAuthMode("login");}}><Text style={s.choiceIcon}>👤</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول العملاء</Text><Text style={s.muted}>للحجز ومتابعة طلبات السفر</Text></View><Text style={s.arrow}>‹</Text></Pressable>
       <Pressable style={s.choice} onPress={()=>{setEntry("staff");setAuthMode("login");}}><Text style={s.choiceIcon}>💼</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول الموظفين</Text><Text style={s.muted}>لإدارة المكتب حسب الصلاحيات</Text></View><Text style={s.arrow}>‹</Text></Pressable>
@@ -222,9 +248,9 @@ export default function App() {
   </ScrollView></SafeAreaView>;
 
   return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page}>
-    <View style={s.top}><View style={s.brandHeader}><Image source={{uri:brandLogo}} style={s.headerLogo} resizeMode="contain"/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text>👤</Text></View></View>
+    <View style={s.top}><View style={s.brandHeader}><View style={s.headerLogo}><Text style={s.headerLogoText}>T</Text></View><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
     {isStaff ? <>
-      <View style={s.adminHero}><Text style={s.adminEyebrow}>TASNIM TRAVEL · CONTROL CENTER</Text><Text style={s.heading}>{role==="owner"?"مرحباً بك في إدارة تسنيم":"لوحة إدارة المكتب"}</Text><Text style={s.muted}>إدارة الرحلات والعروض والحجوزات من مكان واحد</Text><View style={s.ownerBadge}><Text style={s.ownerBadgeText}>{role==="owner"?"المالك الرئيسي":"حساب موظف"}</Text></View></View>
+      <View style={s.adminHero}><Text style={s.adminEyebrow}>TASNIM TRAVEL · CONTROL CENTER</Text><Text style={s.adminTitle}>{role==="owner"?"لوحة تحكم المالك":"لوحة إدارة المكتب"}</Text><Text style={s.adminSubtitle}>تابع الحجوزات وأدر برامج السفر والعروض من مكان واحد.</Text><View style={s.ownerBadge}><Text style={s.ownerBadgeText}>{role==="owner"?"المالك الرئيسي":"حساب موظف"}</Text></View></View>
       {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>الحجوزات</Text></View><View style={s.stat}><Text style={s.statNum}>{catalog.length}</Text><Text style={s.muted}>الخدمات والعروض</Text></View></View>}
       <View style={s.adminSection}><Text style={s.section}>الإدارة السريعة</Text><View style={s.adminActions}>
         {canReadBookings && <Pressable style={s.adminAction} onPress={loadBookings}><Text style={s.adminActionIcon}>▤</Text><Text style={s.adminActionTitle}>تحديث الحجوزات</Text><Text style={s.adminActionHint}>عرض أحدث الطلبات</Text></Pressable>}
