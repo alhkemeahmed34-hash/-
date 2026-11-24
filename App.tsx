@@ -140,6 +140,15 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (session) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (entry) { setEntry(null); setAuthMode("login"); return true; }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [session, entry]);
+
+  useEffect(() => {
     if (!session) return;
     const onHardwareBack = () => {
       if (bookingOpen) { setBookingOpen(false); return true; }
