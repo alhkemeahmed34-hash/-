@@ -19,6 +19,10 @@ jobs:
           java-version: "17"
       - name: Install dependencies
         run: npm install
+      - name: Generate branded PNG icon and splash assets
+        run: |
+          npm install --no-save sharp
+          node scripts/generate-brand-assets.mjs
       - name: Type check
         run: npx tsc --noEmit
       - name: Generate native Android project
