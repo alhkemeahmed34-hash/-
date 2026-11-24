@@ -1,6 +1,6 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
-import { Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground } from "react-native";
+import { Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, Dimensions } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, Session } from "@supabase/supabase-js";
 
@@ -22,6 +22,13 @@ const services: Service[] = [
   { image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=700&auto=format&fit=crop", title: "النقل", category: "transport", subtitle: "تنقل براحة" }
 ];
 const C = { navy:"#173B57", blue:"#2C83B9", sky:"#EAF5FB", pale:"#F4F8FB", white:"#FFFFFF", text:"#183247", muted:"#718596", border:"#E1EAF0", green:"#23856D" };
+const HERO_WIDTH = Dimensions.get("window").width - 36;
+const brandLogo = "https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F570227d3-cc56-45e9-8789-d55e121c4ce6/watermark:F/width:198?csig=AAAAAAAAAAAAAAAAAAAAAAJ9j_hORhUnWIZONgBbycpYTMBaW897V1qf4SZ3_ioJ&exp=1795531399&osig=AAAAAAAAAAAAAAAAAAAAAA5p71AijUp-rgra7fO4stNGCs_V7zRgurbU29Q6XFCv&signer=media-rpc&token=AAIAAU0AJDU3MDIyN2QzLWNjNTYtNDVlOS04Nzg5LWQ1NWUxMjFjNGNlNgAAAAABog4C31ivK9u4p_IKqY89P5zkmcSLejP-vR8IXh7MUsCWSGevbg&x-canva-quality=thumbnail";
+const heroSlides = [
+  { image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop", title: "اكتشف رحلتك مع تسنيم", subtitle: "مناظر طبيعية وتجارب لا تُنسى" },
+  { image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop", title: "وجهات بحرية ساحرة", subtitle: "اختر وجهتك القادمة ودع الترتيب علينا" },
+  { image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop", title: "عالم من الأماكن الجميلة", subtitle: "رحلتك تبدأ بخطوة مع تسنيم" }
+];
 
 function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType }: any) {
   return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"} style={s.input} />;
@@ -160,7 +167,7 @@ export default function App() {
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
   if (!session) return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.sky}/><ScrollView contentContainerStyle={s.welcome}>
-    <View style={s.logo}><Text style={{fontSize:38}}>✈</Text></View><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسفريات والسياحة</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
+    <Image source={{uri:brandLogo}} style={s.loginLogo} resizeMode="contain"/><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
     {!entry ? <View style={s.panel}><Text style={s.heading}>مرحباً بك</Text><Text style={s.muted}>اختر نوع الدخول للمتابعة</Text>
       <Pressable style={s.choice} onPress={()=>{setEntry("customer");setAuthMode("login");}}><Text style={s.choiceIcon}>👤</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول العملاء</Text><Text style={s.muted}>للحجز ومتابعة طلبات السفر</Text></View><Text style={s.arrow}>‹</Text></Pressable>
       <Pressable style={s.choice} onPress={()=>{setEntry("staff");setAuthMode("login");}}><Text style={s.choiceIcon}>💼</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول الموظفين</Text><Text style={s.muted}>لإدارة المكتب حسب الصلاحيات</Text></View><Text style={s.arrow}>‹</Text></Pressable>
@@ -175,7 +182,7 @@ export default function App() {
   </ScrollView></SafeAreaView>;
 
   return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page}>
-    <View style={s.top}><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View><View style={s.avatar}><Text>👤</Text></View></View>
+    <View style={s.top}><View style={s.brandHeader}><Image source={{uri:brandLogo}} style={s.headerLogo} resizeMode="contain"/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text>👤</Text></View></View>
     {isStaff ? <>
       <Text style={s.heading}>لوحة إدارة المكتب</Text><Text style={s.muted}>صلاحية الحساب: {role==="owner"?"المدير الرئيسي":"موظف"}</Text>
       {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>طلبات محمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>50</Text><Text style={s.muted}>حد العرض</Text></View></View>}
@@ -199,7 +206,7 @@ export default function App() {
         {!bookings.length && <Text style={s.note}>لا توجد حجوزات محمّلة. اضغط تحديث الحجوزات.</Text>}
       </> : <Text style={s.note}>ليس لديك صلاحية عرض الحجوزات.</Text>}
     </> : <>
-      {tab==="home" && !detail && <><ImageBackground source={{uri:"https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop"}} imageStyle={{borderRadius:22,opacity:0.88}} style={s.hero}><View style={s.heroShade}/><Text style={s.heroEyebrow}>TASNIM TRAVEL · أهلاً بك</Text><Text style={s.heroTitle}>اكتشف رحلتك مع تسنيم</Text><Text style={s.heroSub}>وجهات وبرامج سفر نرتبها لك بكل عناية</Text></ImageBackground><Text style={s.section}>اختر خدمتك</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={s.service} onPress={()=>setDetail(item)}><Image source={{uri:item.image}} style={s.serviceImage} resizeMode="cover"/><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text><Text style={s.price}>عرض التفاصيل ←</Text></Pressable>)}</View></>}
+      {tab==="home" && !detail && <><ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={s.heroCarousel} contentContainerStyle={s.heroCarouselContent}>{heroSlides.map((slide,index)=><ImageBackground key={index} source={{uri:slide.image}} imageStyle={s.heroImage} style={[s.hero,{width:HERO_WIDTH}]}><View style={s.heroShade}/><Text style={s.heroEyebrow}>TASNIM TRAVEL · أهلاً بك</Text><Text style={s.heroTitle}>{slide.title}</Text><Text style={s.heroSub}>{slide.subtitle}</Text></ImageBackground>)}</ScrollView><Text style={s.section}>اختر خدمتك</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={s.service} onPress={()=>setDetail(item)}><Image source={{uri:item.image}} style={s.serviceImage} resizeMode="cover"/><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text><Text style={s.price}>عرض التفاصيل ←</Text></Pressable>)}</View></>}
       {tab==="home" && detail && <View style={s.detailPage}>
         <Button secondary title="رجوع للخدمات" onPress={()=>setDetail(null)}/>
         <Image source={{uri:detail.image}} style={s.detailImage} resizeMode="cover"/>
@@ -228,6 +235,7 @@ const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:C.pale},center:{alignItems:"center",justifyContent:"center",gap:12},
  welcome:{flexGrow:1,justifyContent:"center",padding:22,backgroundColor:C.sky},
  logo:{alignSelf:"center",width:74,height:74,borderRadius:24,backgroundColor:C.white,alignItems:"center",justifyContent:"center",marginBottom:12},
+ loginLogo:{alignSelf:"center",width:190,height:190,marginBottom:4},headerLogo:{width:56,height:56,borderRadius:12,backgroundColor:C.white},brandHeader:{flexDirection:"row",alignItems:"center",gap:9},
  brand:{textAlign:"center",fontSize:25,fontWeight:"900",letterSpacing:2,color:C.navy},brandAr:{textAlign:"center",fontSize:18,fontWeight:"800",color:C.text,marginTop:7},tagline:{textAlign:"center",color:C.muted,marginTop:7,marginBottom:25},
  panel:{backgroundColor:C.white,padding:19,borderRadius:22,marginTop:16,borderWidth:1,borderColor:C.border},
  heading:{fontSize:22,fontWeight:"900",color:C.text,textAlign:"right",marginBottom:7},muted:{color:C.muted,textAlign:"right",fontSize:12,lineHeight:19},
@@ -236,7 +244,7 @@ const s=StyleSheet.create({
  button:{backgroundColor:C.blue,borderRadius:13,padding:15,alignItems:"center",marginTop:13},secondary:{backgroundColor:C.sky,borderWidth:1,borderColor:"#CDE3F0"},buttonText:{color:C.white,fontWeight:"800",fontSize:14},
  note:{color:C.muted,fontSize:11,textAlign:"center",lineHeight:18,marginTop:14},
  page:{padding:18,paddingBottom:120},top:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",marginBottom:22},brandSmall:{color:C.navy,fontWeight:"900",letterSpacing:1,fontSize:16},avatar:{width:42,height:42,borderRadius:21,backgroundColor:C.white,alignItems:"center",justifyContent:"center"},
- hero:{backgroundColor:C.navy,borderRadius:22,padding:21,minHeight:190,marginBottom:22,overflow:"hidden",justifyContent:"center"},heroEyebrow:{color:"#B9DDF1",textAlign:"right"},heroTitle:{color:C.white,textAlign:"right",fontSize:23,fontWeight:"900",marginTop:12,maxWidth:"85%"},heroSub:{color:"#D6E6F0",textAlign:"right",marginTop:9,fontSize:12},heroShade:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(10,39,60,0.42)",borderRadius:22},
+ heroCarousel:{height:212,marginBottom:22},heroCarouselContent:{gap:12},heroImage:{borderRadius:22,opacity:0.9},hero:{backgroundColor:C.navy,borderRadius:22,padding:21,minHeight:190,marginBottom:0,overflow:"hidden",justifyContent:"center"},heroEyebrow:{color:"#B9DDF1",textAlign:"right"},heroTitle:{color:C.white,textAlign:"right",fontSize:23,fontWeight:"900",marginTop:12,maxWidth:"85%"},heroSub:{color:"#D6E6F0",textAlign:"right",marginTop:9,fontSize:12},heroShade:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(10,39,60,0.42)",borderRadius:22},
  section:{color:C.text,textAlign:"right",fontWeight:"900",fontSize:18,marginTop:13,marginBottom:12},
  grid:{flexDirection:"row-reverse",flexWrap:"wrap",justifyContent:"space-between"},service:{width:"48%",backgroundColor:C.white,padding:15,borderRadius:17,marginBottom:11,borderWidth:1,borderColor:C.border},serviceSelected:{borderColor:C.blue,backgroundColor:C.sky},serviceImage:{width:"100%",height:104,borderRadius:12,marginBottom:10,backgroundColor:C.sky},
  detailPage:{backgroundColor:C.white,padding:16,borderRadius:20,borderWidth:1,borderColor:C.border,marginBottom:18},detailImage:{width:"100%",height:190,borderRadius:16,marginTop:14,marginBottom:16,backgroundColor:C.sky},
