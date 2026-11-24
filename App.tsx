@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
-import { Alert, BackHandler, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, useWindowDimensions } from "react-native";
+import { Alert, BackHandler, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, useWindowDimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, Session } from "@supabase/supabase-js";
 
@@ -230,13 +231,16 @@ export default function App() {
   async function createStaff() {
     if (!staffName.trim() || !staffEmail.trim() || staffPassword.length < 10) { Alert.alert("بيانات الموظف", "أدخل الاسم والبريد وكلمة مرور من 10 أحرف على الأقل."); return; }
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke("create-staff", { body: {
-      full_name: staffName.trim(), email: staffEmail.trim().toLowerCase(), password: staffPassword,
-      permissions: staffPermissions
-    }});
-    setBusy(false);
-    if (error || data?.error) Alert.alert("تعذر إنشاء الحساب", data?.error ?? msg(error));
-    else { Alert.alert("تم إنشاء حساب الموظف", "تم إنشاء الحساب وتأكيد بريده. أرسل للموظف بيانات الدخول بشكل آمن."); setStaffName(""); setStaffEmail(""); setStaffPassword(""); setStaffPermissions(["bookings.read","bookings.update","services.read"]); setStaffOpen(false); }
+    try {
+      const { data, error } = await supabase.functions.invoke("create-staff", { body: {
+        full_name: staffName.trim(), email: staffEmail.trim().toLowerCase(), password: staffPassword,
+        permissions: staffPermissions
+      }});
+      if (error || data?.error) throw new Error(data?.error ?? msg(error));
+      Alert.alert("تم إنشاء حساب الموظف", "تم إنشاء الحساب وتأكيد بريده. أرسل للموظف بيانات الدخول بشكل آمن.");
+      setStaffName(""); setStaffEmail(""); setStaffPassword(""); setStaffPermissions(["bookings.read","bookings.update","services.read"]); setStaffOpen(false);
+    } catch(error:any) { Alert.alert("تعذر إنشاء الحساب",msg(error)); }
+    finally { setBusy(false); }
   }
 
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
@@ -314,7 +318,7 @@ export default function App() {
       {tab==="account" && <View style={s.panel}><Text style={s.heading}>حسابي</Text><Text style={s.choiceTitle}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {session.user.user_metadata?.phone||"غير مضاف"}</Text><Button secondary title="تسجيل الخروج" onPress={signOut}/></View>}
       {tab==="home" && !detail && <View style={s.adminSection}><Text style={s.section}>أحدث عروض تسنيم</Text>{catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>تعذر تحميل العروض حالياً.</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.slice(0,4).map(item=><Pressable key={item.id} style={s.offerCard} onPress={()=>{setSelected({image:services.find(x=>x.category===item.category)?.image||services[3].image,title:item.title,category:item.category,subtitle:item.description});setSelectedServiceId(item.id);setBookingOpen(true);}}><Image source={{uri:services.find(x=>x.category===item.category)?.image||services[3].image}} style={s.offerImage}/><View style={s.offerContent}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>{item.destination}</Text>:null}<Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text><Text style={s.offerAction}>اطلب الحجز ←</Text></View></Pressable>)}{!catalogLoading&&!catalogError&&!catalog.length?<View style={s.emptyState}><Text style={s.emptyTitle}>العروض الجديدة قريباً</Text><Text style={s.muted}>نعمل على تجهيز برامج سفر مميزة. يمكنك إرسال استفسارك الآن.</Text></View>:null}</View>}
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Text style={s.muted}>أدخل بيانات التواصل وسيصل طلبك إلى فريق تسنيم.</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)" multiline/><Button title="إرسال طلب الحجز" onPress={createBooking} disabled={busy} loading={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
-      <View style={s.promo}><Text style={s.promoTitle}>رحلتك تبدأ بخطوة</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك بكل عناية.</Text></View>
+      {tab==="home" && !detail && <View style={s.promo}><Text style={s.promoTitle}>رحلتك تبدأ بخطوة</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك بكل عناية.</Text></View>}
     </>}
     </ScrollView>{!isStaff && <View style={s.bottomNav}>{([{id:"home",label:"الرئيسية",icon:"⌂"},{id:"bookings",label:"حجوزاتي",icon:"▣"},{id:"inquiries",label:"استفساراتي",icon:"?"},{id:"account",label:"حسابي",icon:"♙"}] as const).map(item=><Pressable key={item.id} onPress={()=>{setTab(item.id);setDetail(null);if(item.id==="bookings")loadBookings();}} style={s.navItem}><Text style={[s.navIcon,tab===item.id&&s.navActive]}>{item.icon}</Text><Text style={[s.navLabel,tab===item.id&&s.navActive]}>{item.label}</Text></Pressable>)}</View>}
   </SafeAreaView>;
