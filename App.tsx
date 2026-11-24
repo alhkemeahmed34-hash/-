@@ -216,7 +216,16 @@ export default function App() {
     } catch(error:any) { Alert.alert("تعذر حفظ العرض",msg(error)); }
     finally { setBusy(false); }
   }
-  async function deleteTravelService(id:string) { Alert.alert("حذف البرنامج","هل تريد حذف هذا البرنامج؟",[{text:"إلغاء",style:"cancel"},{text:"حذف",style:"destructive",onPress:async()=>{const {error}=await supabase.from("travel_services").delete().eq("id",id);if(error)Alert.alert("تعذر الحذف",msg(error));else setCatalog(old=>old.filter(x=>x.id!==id));}}]); }
+  async function archiveTravelService(id:string) {
+    Alert.alert("إخفاء العرض","سيختفي العرض من واجهة العملاء مع الاحتفاظ بسجل الحجوزات. هل تريد المتابعة؟",[
+      {text:"إلغاء",style:"cancel"},
+      {text:"إخفاء العرض",style:"destructive",onPress:async()=>{
+        const {error}=await supabase.from("travel_services").update({is_active:false}).eq("id",id);
+        if(error) Alert.alert("تعذر إخفاء العرض",msg(error));
+        else {setCatalog(old=>old.filter(x=>x.id!==id));}
+      }}
+    ]);
+  }
 
   async function createStaff() {
     if (!staffName.trim() || !staffEmail.trim() || staffPassword.length < 10) { Alert.alert("بيانات الموظف", "أدخل الاسم والبريد وكلمة مرور من 10 أحرف على الأقل."); return; }
@@ -241,7 +250,7 @@ export default function App() {
     : <View style={s.panel}><Text style={s.heading}>{entry==="customer"?"حساب العميل":"دخول الموظفين"}</Text>
       {authMode==="signup" && <><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/></>}
       <Field value={email} onChangeText={setEmail} placeholder="البريد الإلكتروني" keyboardType="email-address"/><Field value={password} onChangeText={setPassword} placeholder="كلمة المرور" secureTextEntry/>
-      <Button title={busy?"يرجى الانتظار...":authMode==="signup"?"إنشاء حساب عميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy}/>
+      <Button title={authMode==="signup"?"إنشاء حساب عميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy} loading={busy}/>
       {entry==="customer" && <Button secondary title={authMode==="login"?"إنشاء حساب جديد":"لدي حساب بالفعل"} onPress={()=>setAuthMode(authMode==="login"?"signup":"login")}/>}
       <Button secondary title="رجوع" onPress={()=>setEntry(null)}/><Text style={s.note}>تسجيل الدخول والحسابات مرتبطة الآن بقاعدة بيانات تسنيم.</Text>
     </View>}
@@ -251,13 +260,13 @@ export default function App() {
     <View style={s.top}><View style={s.brandHeader}><View style={s.headerLogo}><Text style={s.headerLogoText}>T</Text></View><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
     {isStaff ? <>
       <View style={s.adminHero}><Text style={s.adminEyebrow}>TASNIM TRAVEL · CONTROL CENTER</Text><Text style={s.adminTitle}>{role==="owner"?"لوحة تحكم المالك":"لوحة إدارة المكتب"}</Text><Text style={s.adminSubtitle}>تابع الحجوزات وأدر برامج السفر والعروض من مكان واحد.</Text><View style={s.ownerBadge}><Text style={s.ownerBadgeText}>{role==="owner"?"المالك الرئيسي":"حساب موظف"}</Text></View></View>
-      {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.muted}>الحجوزات</Text></View><View style={s.stat}><Text style={s.statNum}>{catalog.length}</Text><Text style={s.muted}>الخدمات والعروض</Text></View></View>}
+      {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.statLabel}>الحجوزات المحمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>{catalog.length}</Text><Text style={s.statLabel}>العروض النشطة</Text></View></View>}
       <View style={s.adminSection}><Text style={s.section}>الإدارة السريعة</Text><View style={s.adminActions}>
         {canReadBookings && <Pressable style={s.adminAction} onPress={loadBookings}><Text style={s.adminActionIcon}>▤</Text><Text style={s.adminActionTitle}>تحديث الحجوزات</Text><Text style={s.adminActionHint}>عرض أحدث الطلبات</Text></Pressable>}
         {canManageServices && <Pressable style={s.adminAction} onPress={()=>setServiceOpen(!serviceOpen)}><Text style={s.adminActionIcon}>✚</Text><Text style={s.adminActionTitle}>إضافة عرض</Text><Text style={s.adminActionHint}>رحلة أو برنامج جديد</Text></Pressable>}
         {role==="owner" && <Pressable style={s.adminAction} onPress={()=>setStaffOpen(!staffOpen)}><Text style={s.adminActionIcon}>♙</Text><Text style={s.adminActionTitle}>إدارة الموظفين</Text><Text style={s.adminActionHint}>إنشاء حساب موظف</Text></Pressable>}
       </View></View>
-      <Button secondary title="تسجيل الخروج" onPress={signOut}/>
+      <Button secondary title="تسجيل الخروج" onPress={signOut} loading={busy}/>
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
       {serviceOpen && <View style={s.panel}><Text style={s.section}>إضافة عرض جديد</Text><Text style={s.muted}>اختر نوع الخدمة</Text>
         {services.map(item=><Pressable key={item.category} onPress={()=>setServiceCategory(item.category)} style={s.permissionRow}><Text style={{color:serviceCategory===item.category?C.green:C.muted,fontWeight:"900"}}>{serviceCategory===item.category?"✓":"○"}</Text><Text style={s.choiceTitle}>{item.title}</Text></Pressable>)}
@@ -275,7 +284,7 @@ export default function App() {
         {allPermissions.map(p=><Pressable key={p} onPress={()=>setStaffPermissions(old=>old.includes(p)?old.filter(x=>x!==p):[...old,p])} style={s.permissionRow}><Text style={{color:staffPermissions.includes(p)?C.green:C.muted,fontWeight:"900"}}>{staffPermissions.includes(p)?"✓":"○"}</Text><Text style={s.choiceTitle}>{permissionLabels[p]}</Text></Pressable>)}
         <Button title="إنشاء الحساب" onPress={createStaff} disabled={busy}/></View>}
       {canManageServices && <View style={s.adminSection}><Text style={s.section}>العروض المنشورة</Text>
-        {catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>{catalogError}</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.map(item=><View key={item.id} style={s.booking}><View style={s.offerTopLine}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text></View><Text style={s.choiceTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>الوجهة: {item.destination}</Text>:null}<Text style={s.muted}>{item.description||"لا يوجد وصف إضافي"}</Text><Button secondary title="حذف العرض" onPress={()=>deleteTravelService(item.id)}/></View>)}
+        {catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>{catalogError}</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.map(item=><View key={item.id} style={s.booking}><View style={s.offerTopLine}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text></View><Text style={s.choiceTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>الوجهة: {item.destination}</Text>:null}<Text style={s.muted}>{item.description||"لا يوجد وصف إضافي"}</Text><Button secondary title="إخفاء العرض" onPress={()=>archiveTravelService(item.id)}/></View>)}
         {!catalogLoading&&!catalogError&&!catalog.length?<Text style={s.note}>لم تنشر أي عروض حتى الآن. أضف أول عرض من الأعلى.</Text>:null}
       </View>}
       {canReadBookings ? <>
