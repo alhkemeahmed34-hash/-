@@ -36,7 +36,7 @@ insert into auth.users (
   '10000000-0000-0000-0000-000000000005',
   'authenticated', 'authenticated', 'phase1-staff-updater@example.invalid', '',
   pg_catalog.now(),
-  '{"role":"staff","permissions":["bookings.update"]}'::jsonb,
+  '{"role":"staff","permissions":["bookings.read","bookings.update"]}'::jsonb,
   '{"full_name":"Phase 1 Updater"}'::jsonb, pg_catalog.now(), pg_catalog.now()
 );
 
@@ -256,7 +256,7 @@ $test$;
 select pg_catalog.set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000005', true);
 select pg_catalog.set_config(
   'request.jwt.claims',
-  '{"sub":"10000000-0000-0000-0000-000000000005","role":"authenticated","app_metadata":{"role":"staff","permissions":["bookings.update"]}}',
+  '{"sub":"10000000-0000-0000-0000-000000000005","role":"authenticated","app_metadata":{"role":"staff","permissions":["bookings.read","bookings.update"]}}',
   true
 );
 
