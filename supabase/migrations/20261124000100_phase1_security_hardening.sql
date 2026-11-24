@@ -216,6 +216,7 @@ begin
     new_role := coalesce(new.raw_app_meta_data ->> 'role', '');
 
     if old_role = 'owner'
+       and old.deleted_at is null
        and (
          new_role <> 'owner'
          or (old.deleted_at is null and new.deleted_at is not null)
@@ -237,7 +238,7 @@ begin
     return new;
   end if;
 
-  if tg_op = 'DELETE' and old_role = 'owner' then
+  if tg_op = 'DELETE' and old_role = 'owner' and old.deleted_at is null then
     select count(*)::integer
     into remaining_active_owners
     from auth.users as auth_user
@@ -254,7 +255,7 @@ begin
     return old;
   end if;
 
-  return coalesce(new, old);
+  return old;
 end;
 $function$;
 
