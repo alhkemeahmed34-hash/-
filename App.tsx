@@ -23,7 +23,7 @@ const services: Service[] = [
 ];
 const C = { navy:"#173B57", blue:"#2C83B9", sky:"#EAF5FB", pale:"#F4F8FB", white:"#FFFFFF", text:"#183247", muted:"#718596", border:"#E1EAF0", green:"#23856D" };
 const HERO_WIDTH = Dimensions.get("window").width - 36;
-const brandLogo = "https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F570227d3-cc56-45e9-8789-d55e121c4ce6/watermark:F/width:198?csig=AAAAAAAAAAAAAAAAAAAAAAJ9j_hORhUnWIZONgBbycpYTMBaW897V1qf4SZ3_ioJ&exp=1795531399&osig=AAAAAAAAAAAAAAAAAAAAAA5p71AijUp-rgra7fO4stNGCs_V7zRgurbU29Q6XFCv&signer=media-rpc&token=AAIAAU0AJDU3MDIyN2QzLWNjNTYtNDVlOS04Nzg5LWQ1NWUxMjFjNGNlNgAAAAABog4C31ivK9u4p_IKqY89P5zkmcSLejP-vR8IXh7MUsCWSGevbg&x-canva-quality=thumbnail";
+const brandLogo = "https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F570227d3-cc56-45e9-8789-d55e121c4ce6/watermark:F/width:198?csig=AAAAAAAAAAAAAAAAAAAAAAJ9j_hORhUnWIZONgBbycpYTMBaW897V1qf4SZ3_ioJ&exp=1795531399&osig=AAAAAAAAAAAAAAAAAAAAAA5p71AijUp-rgra7fO4stNGCs_V7zRgurbU29Q6XFCv&signer=media-rpc&token=AAIAAU0AJDU3MDIyN2QzLWNjNTYtNDVlOS04Nzg5LWQ1NWUxMjFjNGNlNgAAAAABog4C31ivK9u4p_IKqY89P5zkmcSLejP-vR6IXh7MUsCWSGevbg&x-canva-quality=thumbnail";
 const heroSlides = [
   { image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop", title: "اكتشف رحلتك مع تسنيم", subtitle: "مناظر طبيعية وتجارب لا تُنسى" },
   { image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop", title: "وجهات بحرية ساحرة", subtitle: "اختر وجهتك القادمة ودع الترتيب علينا" },
