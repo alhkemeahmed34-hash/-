@@ -6,12 +6,22 @@
 - Supabase project: `ecldmphkqxqicwirbbsy` (Singapore).
 - Supabase Auth: customer sign-up and sign-in; staff sign-in is checked against trusted `app_metadata.role`.
 - Database tables: `profiles`, `travel_services`, `bookings`.
-- Database Row Level Security (RLS) is enabled.
-- Private Storage bucket: `passport-documents` (10 MB per file; JPEG, PNG and PDF only).
+- Row Level Security (RLS) is enabled on application tables.
+- Private Storage bucket: `passport-documents` (10 MB per file; JPEG/PNG/PDF).
 - Edge Function: `create-staff`, JWT required; only a user with `app_metadata.role = owner` can create staff accounts.
 - Staff permission claims: `bookings.read`, `bookings.update`, `services.read`, `services.manage`, `customers.read`, `reports.read`.
 
-The app contains the Supabase project URL and publishable key only. A publishable key is intended for client apps; never put a service-role key, database password, or other secret in the app or public Git repository.
+The app contains only the Supabase project URL and publishable key. Never put a service-role key, database password, or other server secret in the app or public Git repository.
+
+## Current app experience
+- Arabic customer sign-up/login and separate staff login.
+- Customer home with travel-service categories, destination offers, offer pricing and optional travel dates.
+- Customer booking requests and booking-history status labels.
+- Owner/staff dashboard with permission-aware booking actions.
+- Owner can publish offers with category, destination, description, price and optional date range.
+- Owners can hide an offer without deleting the related booking history.
+- Owner-only staff creation with individually selected permissions.
+- Remote travel imagery currently uses category images; custom offer-image upload is not implemented yet.
 
 ## Run locally
 ```bash
@@ -19,15 +29,23 @@ npm install
 npx expo start
 ```
 
-## Important setup before real use
-1. Create the first owner account through the customer sign-up screen.
-2. An organization/project owner must then promote that account to `app_metadata.role = owner` using a trusted administrative operation (never by editing user metadata from the app). Until this is done, staff creation is unavailable.
-3. Configure the desired email-confirmation and password-reset behavior in Supabase Auth.
-4. Test customer sign-up, email confirmation, login, booking submission, RLS isolation, staff permissions, and private document access on real devices.
-5. Add document upload UI, booking assignment/audit trail, notifications, payment providers, and airline/hotel supplier APIs when the office has provider credentials.
+## Required production setup
+1. Create the first account through customer sign-up.
+2. Promote the intended owner account to `app_metadata.role = owner` through a trusted administrative operation. Do not set roles from client-side code or editable user metadata.
+3. Configure email confirmation and password recovery in Supabase Auth.
+4. Enable Supabase leaked-password protection before public launch.
+5. Test sign-up, email confirmation, login, booking creation, customer row isolation, staff permissions, offer publishing/hiding and private document access on real devices.
+6. Keep a secure owner recovery procedure and rotate any credential that has ever been exposed in chat or source control.
 
-## Scope and limitations
-The current app supports customer account creation/login, customer booking requests and history, staff login, booking listing/status updates, and owner-only staff account creation with selectable permissions. Flight/hotel/visa suppliers, online payments, push notifications, and document upload UI are not integrated yet. A successful security-advisor scan is not a penetration test and does not guarantee that no vulnerability exists.
+## Not integrated yet
+- Airline, hotel and visa-provider APIs or live inventory.
+- Online payments and refunds.
+- Push notifications or in-app chat.
+- Passport/document upload screens.
+- Custom photo upload for offers.
+- Booking assignment, detailed audit history and reporting dashboards.
+
+A successful type check or security-advisor scan is not a penetration test and does not guarantee that no vulnerability exists.
 
 ## Branding
 - Product: TASNIM TRAVEL
