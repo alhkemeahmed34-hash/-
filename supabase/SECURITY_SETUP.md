@@ -11,7 +11,7 @@ It:
 - limits customer profile, booking, and passport reads to the signed-in user;
 - limits staff access through the existing `public.has_staff_permission()` helper;
 - keeps passport storage private and removes client-side overwrite/delete policies;
-- removes service DELETE permission so services are hidden through `is_active=false`;
+- removes service DELETE permission so services are hidden through `is_active=false` and blocks privileged deletion of a service linked to bookings;
 - adds a database trigger that prevents deletion, soft deletion, or demotion of the final active owner.
 
 ## Important current-state notes
