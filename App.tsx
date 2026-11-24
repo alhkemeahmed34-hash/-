@@ -15,20 +15,26 @@ type Role = "customer" | "staff" | "owner";
 type Service = { image: string; title: string; category: string; subtitle: string };
 const services: Service[] = [
   { image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=700&auto=format&fit=crop", title: "الطيران", category: "flight", subtitle: "ابحث عن رحلتك" },
-  { image: "https://images.unsplash.com/photo-1564769625905-50e93615e769?w=700&auto=format&fit=crop", title: "العمرة", category: "umrah", subtitle: "برامج إيمانية" },
-  { image: "https://images.unsplash.com/photo-1591604129939-f1s529b5fe9e?w=700&auto=format&fit=crop", title: "الحج", category: "hajj", subtitle: "برامج الحج" },
+  { image: "https://images.unsplash.com/photo-1564769625905-50e93615e769?w=700&auto=format&fit=crop", title: "الحج والعمرة", category: "umrah", subtitle: "برامج الحج والعمرة" },
   { image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=700&auto=format&fit=crop", title: "السياحة", category: "tourism", subtitle: "اكتشف وجهات جديدة" },
   { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop", title: "الفنادق", category: "hotel", subtitle: "إقامة تناسبك" },
   { image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=700&auto=format&fit=crop", title: "التأشيرات", category: "visa", subtitle: "خدمات التأشيرات" },
   { image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=700&auto=format&fit=crop", title: "النقل", category: "transport", subtitle: "تنقل براحة" }
 ];
-const C = { navy:"#173B57", blue:"#2C83B9", sky:"#EAF5FB", pale:"#F4F8FB", white:"#FFFFFF", text:"#183247", muted:"#718596", border:"#E1EAF0", green:"#23856D" };
+const C = { navy:"#073F43", blue:"#167C73", sky:"#E5F2EE", pale:"#F5F8F5", white:"#FFFFFF", text:"#123A3B", muted:"#718784", border:"#DCE9E4", green:"#21856E", gold:"#C6A15B" };
 const heroSlides = [
   { image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop", title: "اكتشف رحلتك مع تسنيم", subtitle: "وجهات مختارة وتجارب لا تُنسى" },
   { image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop", title: "إجازتك القادمة تبدأ هنا", subtitle: "اختر وجهتك ودع تفاصيل الرحلة علينا" },
   { image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop", title: "العالم أقرب مما تتخيل", subtitle: "برامج سفر تناسب وقتك وميزانيتك" }
 ];
 
+function BrandEmblem({ size=92 }: { size?: number }) {
+  return <View style={{width:size,height:size,borderRadius:size*0.32,backgroundColor:C.navy,borderWidth:2,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+    <View style={{position:"absolute",top:size*0.12,width:size*0.64,height:size*0.64,borderRadius:size*0.32,borderWidth:2,borderColor:C.gold,opacity:0.9}}/>
+    <Text style={{fontSize:size*0.42,color:C.gold,fontWeight:"900",lineHeight:size*0.5}}>✦</Text>
+    <Text style={{fontSize:size*0.16,color:C.white,fontWeight:"900",marginTop:-size*0.02}}>T</Text>
+  </View>;
+}
 function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
   return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput]} />;
 }
@@ -36,19 +42,20 @@ function Button({ title, onPress, secondary=false, disabled=false, loading=false
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{disabled:disabled||loading,busy:loading}} disabled={disabled||loading} onPress={onPress} style={({pressed})=>[s.button,secondary&&s.secondary,(disabled||loading)&&{opacity:0.55},pressed&&!(disabled||loading)&&{opacity:0.82,transform:[{scale:0.99}]}]}>{loading?<ActivityIndicator color={secondary?C.blue:C.white}/>:<Text style={[s.buttonText,secondary&&{color:C.blue}]}>{title}</Text>}</Pressable>;
 }
 function msg(error: any) { return error?.message ?? "حدث خطأ غير متوقع. حاول مرة أخرى."; }
-function categoryLabel(category: string) { return services.find(item=>item.category===category)?.title ?? "خدمة سفر"; }
+function categoryLabel(category: string) { if (category==="hajj" || category==="umrah") return "الحج والعمرة"; return services.find(item=>item.category===category)?.title ?? "خدمة سفر"; }
 function statusLabel(status: string) { return ({pending:"بانتظار المراجعة",under_review:"قيد المراجعة",confirmed:"تم التأكيد",rejected:"مرفوض",cancelled:"ملغي",completed:"مكتمل"} as Record<string,string>)[status] ?? status; }
 function formatPrice(price: any, currency="YER") { return price===null||price===undefined ? "السعر عند الاستفسار" : `${Number(price).toLocaleString("ar-YE")} ${currency==="YER"?"ر.ي":currency}`; }
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [splashVisible, setSplashVisible] = useState(true);
   const [authMode, setAuthMode] = useState<"login"|"signup">("login");
   const [entry, setEntry] = useState<"customer"|"staff"|null>(null);
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]); const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
-  const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("flight");
+  const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("umrah");
   const [serviceDestination,setServiceDestination]=useState(""); const [serviceStartDate,setServiceStartDate]=useState(""); const [serviceEndDate,setServiceEndDate]=useState("");
   const [bookings, setBookings] = useState<any[]>([]); const [staffOpen, setStaffOpen] = useState(false);
   const [staffName, setStaffName] = useState(""); const [staffEmail, setStaffEmail] = useState(""); const [staffPassword, setStaffPassword] = useState("");
@@ -60,6 +67,11 @@ export default function App() {
   const [bookingsLoading,setBookingsLoading]=useState(false); const [bookingsError,setBookingsError]=useState("");
   const { width: windowWidth } = useWindowDimensions();
   const heroWidth = Math.max(260,windowWidth-36);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashVisible(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -252,10 +264,11 @@ export default function App() {
     finally { setBusy(false); }
   }
 
+  if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="light-content" backgroundColor={C.navy}/><BrandEmblem size={132}/><Text style={s.splashArabic}>تسنيم</Text><View style={s.splashDivider}/><Text style={s.splashEnglish}>TASNIM TRAVEL</Text><Text style={s.splashTagline}>رحلتك تبدأ من هنا</Text></SafeAreaView>;
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
   if (!session) return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.sky}/><ScrollView contentContainerStyle={s.welcome} keyboardShouldPersistTaps="handled">
-    <View style={s.loginBrandMark}><Text style={s.loginBrandLetter}>T</Text></View><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
+    <BrandEmblem size={112}/><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
     {!entry ? <View style={s.panel}><Text style={s.heading}>مرحباً بك</Text><Text style={s.muted}>اختر نوع الدخول للمتابعة</Text>
       <Pressable style={s.choice} onPress={()=>{setEntry("customer");setAuthMode("login");}}><Text style={s.choiceIcon}>👤</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول العملاء</Text><Text style={s.muted}>للحجز ومتابعة طلبات السفر</Text></View><Text style={s.arrow}>‹</Text></Pressable>
       <Pressable style={s.choice} onPress={()=>{setEntry("staff");setAuthMode("login");}}><Text style={s.choiceIcon}>💼</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول الموظفين</Text><Text style={s.muted}>لإدارة المكتب حسب الصلاحيات</Text></View><Text style={s.arrow}>‹</Text></Pressable>
@@ -270,7 +283,7 @@ export default function App() {
   </ScrollView></SafeAreaView>;
 
   return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
-    <View style={s.top}><View style={s.brandHeader}><View style={s.headerLogo}><Text style={s.headerLogoText}>T</Text></View><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
+    <View style={s.top}><View style={s.brandHeader}><BrandEmblem size={46}/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
     {isStaff ? <>
       <View style={s.adminHero}><Text style={s.adminEyebrow}>TASNIM TRAVEL · CONTROL CENTER</Text><Text style={s.adminTitle}>{role==="owner"?"لوحة تحكم المالك":"لوحة إدارة المكتب"}</Text><Text style={s.adminSubtitle}>تابع الحجوزات وأدر برامج السفر والعروض من مكان واحد.</Text><View style={s.ownerBadge}><Text style={s.ownerBadgeText}>{role==="owner"?"المالك الرئيسي":"حساب موظف"}</Text></View></View>
       {canReadBookings && <View style={s.stats}><View style={s.stat}><Text style={s.statNum}>{bookings.length}</Text><Text style={s.statLabel}>الحجوزات المحمّلة</Text></View><View style={s.stat}><Text style={s.statNum}>{catalog.length}</Text><Text style={s.statLabel}>العروض النشطة</Text></View></View>}
@@ -282,7 +295,7 @@ export default function App() {
       <Button secondary title="تسجيل الخروج" onPress={signOut} loading={busy}/>
       {role==="owner" && <Button secondary title="إنشاء حساب موظف" onPress={()=>setStaffOpen(!staffOpen)}/>}
       {serviceOpen && <View style={s.panel}><Text style={s.section}>إضافة عرض جديد</Text><Text style={s.muted}>اختر نوع الخدمة</Text>
-        {services.map(item=><Pressable key={item.category} onPress={()=>setServiceCategory(item.category)} style={s.permissionRow}><Text style={{color:serviceCategory===item.category?C.green:C.muted,fontWeight:"900"}}>{serviceCategory===item.category?"✓":"○"}</Text><Text style={s.choiceTitle}>{item.title}</Text></Pressable>)}
+        {services.filter(item=>["umrah","tourism"].includes(item.category) || !["umrah","tourism"].includes(item.category)).map(item=><Pressable key={item.category} onPress={()=>setServiceCategory(item.category)} style={s.permissionRow}><Text style={{color:serviceCategory===item.category?C.green:C.muted,fontWeight:"900"}}>{serviceCategory===item.category?"✓":"○"}</Text><Text style={s.choiceTitle}>{item.title}</Text></Pressable>)}
         <Field value={serviceTitle} onChangeText={setServiceTitle} placeholder="اسم البرنامج أو العرض"/>
         <Field value={serviceDestination} onChangeText={setServiceDestination} placeholder="الوجهة أو المدينة (اختياري)"/>
         <Field value={serviceDescription} onChangeText={setServiceDescription} placeholder="وصف العرض والتفاصيل" multiline/>
@@ -312,7 +325,7 @@ export default function App() {
         <Image source={{uri:detail.image}} style={s.detailImage} resizeMode="cover"/>
         <Text style={s.heading}>{detail.title}</Text>
         <Text style={s.muted}>{detail.subtitle} · البرامج والأسعار المعتمدة من مكتب تسنيم</Text>
-        {catalog.filter(x=>x.category===detail.category).map(item=><View key={item.id} style={s.booking}>
+        {catalog.filter(x=>detail.category==="umrah" ? ["umrah","hajj"].includes(x.category) : x.category===detail.category).map(item=><View key={item.id} style={s.booking}>
           <Text style={s.choiceTitle}>{item.title}</Text>
           {item.destination?<Text style={s.muted}>الوجهة: {item.destination}</Text>:null}
           <Text style={s.muted}>{item.description||"لا توجد تفاصيل إضافية حالياً"}</Text>
@@ -320,12 +333,12 @@ export default function App() {
           {item.starts_at||item.ends_at?<Text style={s.muted}>الموعد: {item.starts_at||"غير محدد"} – {item.ends_at||"غير محدد"}</Text>:null}
           <Button title="اطلب الحجز" onPress={()=>{setSelected({...detail,title:item.title});setSelectedServiceId(item.id);setBookingOpen(true);}}/>
         </View>)}
-        {!catalog.some(x=>x.category===detail.category)&&<View style={s.emptyState}><Text style={s.emptyTitle}>لا توجد عروض منشورة لهذا القسم حالياً</Text><Text style={s.muted}>يمكنك إرسال استفسار للفريق وسيتم التواصل معك.</Text><Button title="إرسال استفسار" onPress={()=>{setSelected(detail);setSelectedServiceId(null);setBookingOpen(true);}}/></View>}
+        {!catalog.some(x=>detail.category==="umrah" ? ["umrah","hajj"].includes(x.category) : x.category===detail.category)&&<View style={s.emptyState}><Text style={s.emptyTitle}>لا توجد عروض منشورة لهذا القسم حالياً</Text><Text style={s.muted}>يمكنك إرسال استفسار للفريق وسيتم التواصل معك.</Text><Button title="إرسال استفسار" onPress={()=>{setSelected(detail);setSelectedServiceId(null);setBookingOpen(true);}}/></View>}
       </View>}
       {tab==="bookings" && <View><Text style={s.heading}>حجوزاتي</Text><Text style={s.muted}>تابع حالة طلبات السفر من هنا.</Text><Button title="تحديث الحجوزات" onPress={loadBookings} loading={bookingsLoading}/>{bookingsLoading?<ActivityIndicator color={C.blue}/>:bookingsError?<View style={s.panel}><Text style={s.muted}>{bookingsError}</Text><Button secondary title="إعادة المحاولة" onPress={loadBookings}/></View>:bookings.map(b=><View key={b.id} style={s.booking}><View style={s.offerTopLine}><Text style={s.statusBadge}>{statusLabel(b.status)}</Text><Text style={s.offerCategory}>{categoryLabel(b.service_category)}</Text></View><Text style={s.choiceTitle}>{b.details?.service_title||categoryLabel(b.service_category)}</Text><Text style={s.muted}>{new Date(b.created_at).toLocaleDateString("ar-YE")}</Text>{b.details?.notes?<Text style={s.muted}>ملاحظاتك: {b.details.notes}</Text>:null}</View>)}{!bookingsLoading&&!bookingsError&&!bookings.length&&<Text style={s.note}>لا توجد حجوزات حتى الآن. ابدأ باختيار خدمة وأرسل طلبك.</Text>}</View>}
       {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
       {tab==="account" && <View style={s.panel}><Text style={s.heading}>حسابي</Text><Text style={s.choiceTitle}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {session.user.user_metadata?.phone||"غير مضاف"}</Text><Button secondary title="تسجيل الخروج" onPress={signOut}/></View>}
-      {tab==="home" && !detail && <View style={s.adminSection}><Text style={s.section}>أحدث عروض تسنيم</Text>{catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>تعذر تحميل العروض حالياً.</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.slice(0,4).map(item=><Pressable key={item.id} style={s.offerCard} onPress={()=>{setSelected({image:services.find(x=>x.category===item.category)?.image||services[3].image,title:item.title,category:item.category,subtitle:item.description});setSelectedServiceId(item.id);setBookingOpen(true);}}><Image source={{uri:services.find(x=>x.category===item.category)?.image||services[3].image}} style={s.offerImage}/><View style={s.offerContent}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>{item.destination}</Text>:null}<Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text><Text style={s.offerAction}>اطلب الحجز ←</Text></View></Pressable>)}{!catalogLoading&&!catalogError&&!catalog.length?<View style={s.emptyState}><Text style={s.emptyTitle}>العروض الجديدة قريباً</Text><Text style={s.muted}>نعمل على تجهيز برامج سفر مميزة. يمكنك إرسال استفسارك الآن.</Text></View>:null}</View>}
+      {tab==="home" && !detail && <View style={s.adminSection}><Text style={s.section}>أحدث عروض تسنيم</Text>{catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>تعذر تحميل العروض حالياً.</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.slice(0,4).map(item=><Pressable key={item.id} style={s.offerCard} onPress={()=>{setSelected({image:(services.find(x=>x.category===item.category)|| (item.category==="hajj"?services.find(x=>x.category==="umrah"):undefined))?.image||services[2].image,title:item.title,category:item.category,subtitle:item.description});setSelectedServiceId(item.id);setBookingOpen(true);}}><Image source={{uri:services.find(x=>x.category===item.category)?.image||services[3].image}} style={s.offerImage}/><View style={s.offerContent}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>{item.destination}</Text>:null}<Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text><Text style={s.offerAction}>اطلب الحجز ←</Text></View></Pressable>)}{!catalogLoading&&!catalogError&&!catalog.length?<View style={s.emptyState}><Text style={s.emptyTitle}>العروض الجديدة قريباً</Text><Text style={s.muted}>نعمل على تجهيز برامج سفر مميزة. يمكنك إرسال استفسارك الآن.</Text></View>:null}</View>}
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Text style={s.muted}>أدخل بيانات التواصل وسيصل طلبك إلى فريق تسنيم.</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)" multiline/><Button title="إرسال طلب الحجز" onPress={createBooking} disabled={busy} loading={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
       {tab==="home" && !detail && <View style={s.promo}><Text style={s.promoTitle}>رحلتك تبدأ بخطوة</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك بكل عناية.</Text></View>}
     </>}
@@ -336,8 +349,13 @@ export default function App() {
 const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:C.pale},center:{alignItems:"center",justifyContent:"center",gap:12},
  welcome:{flexGrow:1,justifyContent:"center",padding:22,backgroundColor:C.sky},
+ splash:{backgroundColor:C.navy,alignItems:"center",justifyContent:"center"},
+ splashArabic:{color:C.white,fontSize:42,fontWeight:"900",marginTop:22,letterSpacing:1},
+ splashDivider:{width:176,height:2,backgroundColor:C.gold,marginTop:12,marginBottom:12},
+ splashEnglish:{color:C.gold,fontSize:17,fontWeight:"900",letterSpacing:3},
+ splashTagline:{color:"#D9E8E3",fontSize:13,marginTop:14},
  logo:{alignSelf:"center",width:74,height:74,borderRadius:24,backgroundColor:C.white,alignItems:"center",justifyContent:"center",marginBottom:12},
- loginBrandMark:{alignSelf:"center",width:104,height:104,borderRadius:32,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",marginBottom:18,borderWidth:5,borderColor:"#D8B56D"},loginBrandLetter:{color:"#E8C77C",fontSize:58,fontWeight:"900",fontStyle:"italic"},headerLogo:{width:48,height:48,borderRadius:15,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",borderWidth:2,borderColor:"#D8B56D"},headerLogoText:{color:"#E8C77C",fontSize:28,fontWeight:"900",fontStyle:"italic"},brandHeader:{flexDirection:"row",alignItems:"center",gap:9},avatarLetter:{color:C.navy,fontWeight:"900",fontSize:17},
+ loginBrandMark:{alignSelf:"center",width:104,height:104,borderRadius:32,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",marginBottom:18,borderWidth:5,borderColor:C.gold},loginBrandLetter:{color:C.gold,fontSize:58,fontWeight:"900",fontStyle:"italic"},headerLogo:{width:48,height:48,borderRadius:15,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",borderWidth:2,borderColor:C.gold},headerLogoText:{color:C.gold,fontSize:28,fontWeight:"900",fontStyle:"italic"},brandHeader:{flexDirection:"row",alignItems:"center",gap:9},avatarLetter:{color:C.navy,fontWeight:"900",fontSize:17},
  brand:{textAlign:"center",fontSize:25,fontWeight:"900",letterSpacing:2,color:C.navy},brandAr:{textAlign:"center",fontSize:18,fontWeight:"800",color:C.text,marginTop:7},tagline:{textAlign:"center",color:C.muted,marginTop:7,marginBottom:25},
  panel:{backgroundColor:C.white,padding:19,borderRadius:22,marginTop:16,borderWidth:1,borderColor:C.border},
  heading:{fontSize:22,fontWeight:"900",color:C.text,textAlign:"right",marginBottom:7},adminTitle:{fontSize:25,fontWeight:"900",color:C.white,textAlign:"right",marginBottom:8},adminSubtitle:{fontSize:12,color:"#D7E6EF",textAlign:"right",lineHeight:20},muted:{color:C.muted,textAlign:"right",fontSize:12,lineHeight:19},
