@@ -33,12 +33,20 @@ insert into auth.users (
   '{"full_name":"Phase 1 Limited"}'::jsonb, pg_catalog.now(), pg_catalog.now()
 );
 
+insert into public.travel_services (
+  id, category, title, description, price, currency, is_active
+) values (
+  '30000000-0000-0000-0000-000000000001',
+  'flight', 'Phase 1 test service', 'Test fixture', 100, 'YER', true
+);
+
 insert into public.bookings (
-  id, customer_id, service_category, customer_name, customer_phone, status, details
+  id, customer_id, service_id, service_category, customer_name, customer_phone, status, details
 ) values
 (
   '20000000-0000-0000-0000-000000000001',
   '10000000-0000-0000-0000-000000000001',
+  '30000000-0000-0000-0000-000000000001',
   'flight', 'Customer A', '0000000001', 'pending', '{}'::jsonb
 ),
 (
@@ -220,6 +228,27 @@ end;
 $test$;
 
 reset role;
+
+-- A linked service cannot be physically deleted, even by a privileged database role.
+do $test$
+begin
+  begin
+    delete from public.travel_services
+    where id = '30000000-0000-0000-0000-000000000001';
+    raise exception 'FAIL: deleting a service linked to a booking was not blocked';
+  exception
+    when foreign_key_violation then
+      null;
+  end;
+
+  if not exists (
+    select 1 from public.travel_services
+    where id = '30000000-0000-0000-0000-000000000001'
+  ) then
+    raise exception 'FAIL: linked travel service disappeared';
+  end if;
+end;
+$test$;
 
 -- Exercise the last-owner guard only when this isolated test database has no
 -- pre-existing active owner. Never touch an existing owner account.
