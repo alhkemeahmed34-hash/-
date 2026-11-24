@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/tasnim-professional-refresh
+      - feature/tasnim-brand-refresh
   pull_request:
     branches:
       - main
