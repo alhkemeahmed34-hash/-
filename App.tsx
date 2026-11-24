@@ -115,7 +115,7 @@ export default function App() {
     else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); if (tab === "bookings") loadBookings(); }
   }
   async function changeBookingStatus(id: string, status: string) {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const { error } = await supabase.rpc("update_booking_status", { p_booking_id: id, p_status: status });
     if (error) Alert.alert("تعذر تحديث الحجز", msg(error)); else loadBookings();
   }
   async function loadBookings() {
