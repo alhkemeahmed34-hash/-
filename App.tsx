@@ -29,10 +29,12 @@ const heroSlides = [
 ];
 
 function BrandEmblem({ size=92 }: { size?: number }) {
-  return <View style={{width:size,height:size,borderRadius:size*0.32,backgroundColor:C.navy,borderWidth:2,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-    <View style={{position:"absolute",top:size*0.12,width:size*0.64,height:size*0.64,borderRadius:size*0.32,borderWidth:2,borderColor:C.gold,opacity:0.9}}/>
-    <Text style={{fontSize:size*0.42,color:C.gold,fontWeight:"900",lineHeight:size*0.5}}>✦</Text>
-    <Text style={{fontSize:size*0.16,color:C.white,fontWeight:"900",marginTop:-size*0.02}}>T</Text>
+  return <View accessibilityLabel="شعار تسنيم" style={{width:size,height:size,borderRadius:size/2,backgroundColor:C.navy,borderWidth:1.5,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+    <View style={{position:"absolute",width:size*0.82,height:size*0.82,borderRadius:size/2,borderWidth:1,borderColor:"#83B7A8"}}/>
+    <View style={{position:"absolute",width:size*0.68,height:size*0.68,borderRadius:size/2,borderWidth:1,borderColor:C.gold,transform:[{rotate:"-32deg"}],borderLeftColor:"transparent",borderRightColor:"transparent"}}/>
+    <View style={{position:"absolute",top:size*0.12,right:size*0.19,width:size*0.12,height:size*0.12,backgroundColor:C.gold,transform:[{rotate:"45deg"}]}}/>
+    <Text style={{fontSize:size*0.48,color:C.gold,fontWeight:"900",lineHeight:size*0.57,includeFontPadding:false}}>ت</Text>
+    <View style={{position:"absolute",bottom:size*0.18,width:size*0.28,height:1.5,backgroundColor:C.gold}}/>
   </View>;
 }
 function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
