@@ -32,7 +32,7 @@ Run the SQL smoke tests only against a disposable local Supabase database after 
 ```sh
 supabase start
 supabase migration up
-supabase test db
+psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/phase1_security.sql
 ```
 
 The test file creates temporary auth users, bookings, and passport-object rows inside a transaction and rolls everything back. The last-owner destructive test is skipped if the local database already has an active owner.
