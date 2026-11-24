@@ -1,4 +1,4 @@
-name: Android debug build
+name: Android standalone build
 
 on:
   workflow_dispatch:
@@ -23,15 +23,15 @@ jobs:
         run: npx tsc --noEmit
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
-      - name: Build debug APK
+      - name: Build standalone release APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
-      - name: Upload test APK
+          ./gradlew assembleRelease
+      - name: Upload standalone APK
         uses: actions/upload-artifact@v4
         with:
-          name: tasnim-travel-android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: tasnim-travel-android-release
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 7
