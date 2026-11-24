@@ -16,10 +16,10 @@ type Service = { image: string; title: string; category: string; subtitle: strin
 const services: Service[] = [
   { image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=700&auto=format&fit=crop", title: "الطيران", category: "flight", subtitle: "ابحث عن رحلتك" },
   { image: "https://images.unsplash.com/photo-1564769625905-50e93615e769?w=700&auto=format&fit=crop", title: "الحج والعمرة", category: "umrah", subtitle: "برامج الحج والعمرة" },
-  { image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=700&auto=format&fit=crop", title: "السياحة", category: "tourism", subtitle: "اكتشف وجهات جديدة" },
+  { image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=900&auto=format&fit=crop", title: "السياحة", category: "tourism", subtitle: "اكتشف وجهات جديدة" },
   { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop", title: "الفنادق", category: "hotel", subtitle: "إقامة تناسبك" },
-  { image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=700&auto=format&fit=crop", title: "التأشيرات", category: "visa", subtitle: "خدمات التأشيرات" },
-  { image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=700&auto=format&fit=crop", title: "النقل", category: "transport", subtitle: "تنقل براحة" }
+  { image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=900&auto=format&fit=crop", title: "التأشيرات", category: "visa", subtitle: "خدمات التأشيرات" },
+  { image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=900&auto=format&fit=crop", title: "النقل", category: "transport", subtitle: "تنقل براحة" }
 ];
 const C = { navy:"#073F43", blue:"#167C73", sky:"#E5F2EE", pale:"#F5F8F5", white:"#FFFFFF", text:"#123A3B", muted:"#718784", border:"#DCE9E4", green:"#21856E", gold:"#C6A15B" };
 const heroSlides = [
@@ -29,12 +29,12 @@ const heroSlides = [
 ];
 
 function BrandEmblem({ size=92 }: { size?: number }) {
-  return <View accessibilityLabel="شعار تسنيم" style={{width:size,height:size,borderRadius:size/2,backgroundColor:C.navy,borderWidth:1.5,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-    <View style={{position:"absolute",width:size*0.82,height:size*0.82,borderRadius:size/2,borderWidth:1,borderColor:"#83B7A8"}}/>
-    <View style={{position:"absolute",width:size*0.68,height:size*0.68,borderRadius:size/2,borderWidth:1,borderColor:C.gold,transform:[{rotate:"-32deg"}],borderLeftColor:"transparent",borderRightColor:"transparent"}}/>
-    <View style={{position:"absolute",top:size*0.12,right:size*0.19,width:size*0.12,height:size*0.12,backgroundColor:C.gold,transform:[{rotate:"45deg"}]}}/>
-    <Text style={{fontSize:size*0.48,color:C.gold,fontWeight:"900",lineHeight:size*0.57,includeFontPadding:false}}>ت</Text>
-    <View style={{position:"absolute",bottom:size*0.18,width:size*0.28,height:1.5,backgroundColor:C.gold}}/>
+  return <View accessibilityLabel="شعار تسنيم للسياحة والسفريات" style={{width:size,height:size,borderRadius:size*0.3,backgroundColor:C.navy,borderWidth:2,borderColor:C.gold,alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+    <View style={{position:"absolute",width:size*0.82,height:size*0.82,borderRadius:size,borderWidth:1,borderColor:"#77B8A8"}}/>
+    <View style={{position:"absolute",width:size*0.65,height:size*0.65,borderRadius:size,borderWidth:1.5,borderColor:C.gold,borderLeftColor:"transparent",transform:[{rotate:"-35deg"}]}}/>
+    <Text style={{position:"absolute",top:size*0.09,color:C.gold,fontSize:size*0.2,fontWeight:"900"}}>✈</Text>
+    <Text style={{fontSize:size*0.43,color:C.white,fontWeight:"900",lineHeight:size*0.52,includeFontPadding:false}}>ت</Text>
+    <Text style={{position:"absolute",bottom:size*0.09,color:"#E8D6A6",fontSize:size*0.085,fontWeight:"900",letterSpacing:1}}>TRAVEL</Text>
   </View>;
 }
 function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
@@ -284,20 +284,45 @@ export default function App() {
   if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="light-content" backgroundColor={C.navy}/><BrandEmblem size={132}/><Text style={s.splashArabic}>تسنيم</Text><View style={s.splashDivider}/><Text style={s.splashEnglish}>TASNIM TRAVEL</Text><Text style={s.splashTagline}>رحلتك تبدأ من هنا</Text></SafeAreaView>;
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
-  if (!session) return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.sky}/><ScrollView contentContainerStyle={s.welcome} keyboardShouldPersistTaps="handled">
-    <BrandEmblem size={112}/><Text style={s.brand}>TASNIM TRAVEL</Text><Text style={s.brandAr}>تسنيم للسياحة والسفريات</Text><Text style={s.tagline}>رحلتك تبدأ من هنا</Text>
-    {!entry ? <View style={s.panel}><Text style={s.heading}>مرحباً بك</Text><Text style={s.muted}>اختر نوع الدخول للمتابعة</Text>
-      <Pressable style={s.choice} onPress={()=>{setEntry("customer");setAuthMode("login");}}><Text style={s.choiceIcon}>👤</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول العملاء</Text><Text style={s.muted}>للحجز ومتابعة طلبات السفر</Text></View><Text style={s.arrow}>‹</Text></Pressable>
-      <Pressable style={s.choice} onPress={()=>{setEntry("staff");setAuthMode("login");}}><Text style={s.choiceIcon}>💼</Text><View style={{flex:1}}><Text style={s.choiceTitle}>دخول الموظفين</Text><Text style={s.muted}>لإدارة المكتب حسب الصلاحيات</Text></View><Text style={s.arrow}>‹</Text></Pressable>
-      <Text style={s.note}>حسابات الموظفين ينشئها المدير فقط.</Text></View>
-    : <View style={s.panel}><Text style={s.heading}>{entry==="customer"?"حساب العميل":"دخول الموظفين"}</Text>
-      {authMode==="signup" && <><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/></>}
-      <Field value={email} onChangeText={setEmail} placeholder="البريد الإلكتروني" keyboardType="email-address"/><Field value={password} onChangeText={setPassword} placeholder="كلمة المرور" secureTextEntry/>
-      <Button title={authMode==="signup"?"إنشاء حساب عميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy} loading={busy}/>
-      {entry==="customer" && <Button secondary title={authMode==="login"?"إنشاء حساب جديد":"لدي حساب بالفعل"} onPress={()=>setAuthMode(authMode==="login"?"signup":"login")}/>}
-      <Button secondary title="رجوع" onPress={()=>setEntry(null)}/><Text style={s.note}>تسجيل الدخول والحسابات مرتبطة الآن بقاعدة بيانات تسنيم.</Text>
-    </View>}
-  </ScrollView></SafeAreaView>;
+  if (!session) return <SafeAreaView style={s.safe}>
+    <StatusBar barStyle="light-content" backgroundColor={C.navy}/>
+    <ScrollView contentContainerStyle={s.authPage} keyboardShouldPersistTaps="handled">
+      <ImageBackground source={{uri:"https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&auto=format&fit=crop"}} style={s.authHero} imageStyle={s.authHeroImage}>
+        <View style={s.authHeroShade}/>
+        <BrandEmblem size={116}/>
+        <Text style={s.authBrand}>تسنيم</Text><Text style={s.authEnglish}>TASNIM TRAVEL</Text>
+        <View style={s.authGoldLine}/>
+        <Text style={s.authSlogan}>نأخذك إلى وجهتك… بثقة واهتمام</Text>
+        <Text style={s.authSubSlogan}>السياحة والسفريات · رحلتك تبدأ من هنا</Text>
+      </ImageBackground>
+      <View style={s.authContent}>
+        {!entry ? <View style={s.authPanel}>
+          <Text style={s.authTitle}>أهلاً بك في عالم تسنيم</Text>
+          <Text style={s.authDescription}>اختر بوابتك للوصول إلى خدماتنا وبرامج السفر.</Text>
+          <Pressable style={s.authChoice} onPress={()=>{setEntry("customer");setAuthMode("login");}}>
+            <View style={s.authChoiceIcon}><Text style={s.authChoiceGlyph}>✈</Text></View>
+            <View style={{flex:1}}><Text style={s.authChoiceTitle}>أنا عميل</Text><Text style={s.authChoiceSub}>استكشف الرحلات واحجز وتابع طلباتك</Text></View><Text style={s.authArrow}>‹</Text>
+          </Pressable>
+          <Pressable style={s.authChoice} onPress={()=>{setEntry("staff");setAuthMode("login");}}>
+            <View style={s.authChoiceIcon}><Text style={s.authChoiceGlyph}>▣</Text></View>
+            <View style={{flex:1}}><Text style={s.authChoiceTitle}>دخول فريق تسنيم</Text><Text style={s.authChoiceSub}>بوابة الموظفين وإدارة المكتب</Text></View><Text style={s.authArrow}>‹</Text>
+          </Pressable>
+          <Text style={s.authFoot}>تجربة سفر تبدأ بالثقة، وتكتمل براحة البال</Text>
+        </View> : <View style={s.authPanel}>
+          <Pressable onPress={()=>setEntry(null)} style={s.authBack}><Text style={s.authBackText}>← رجوع</Text></Pressable>
+          <Text style={s.authTitle}>{entry==="customer"?"مرحباً بك، لنبدأ رحلتك":"بوابة فريق تسنيم"}</Text>
+          <Text style={s.authDescription}>{authMode==="signup"?"أنشئ حسابك لتتمكن من متابعة حجوزاتك.":"سجّل الدخول للوصول إلى حسابك وخدمات تسنيم."}</Text>
+          {authMode==="signup" && <><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/></>}
+          <Field value={email} onChangeText={setEmail} placeholder="البريد الإلكتروني" keyboardType="email-address"/>
+          <Field value={password} onChangeText={setPassword} placeholder="كلمة المرور" secureTextEntry/>
+          <Button title={authMode==="signup"?"إنشاء حساب العميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy} loading={busy}/>
+          {entry==="customer" && <Button secondary title={authMode==="login"?"إنشاء حساب جديد":"لدي حساب بالفعل"} onPress={()=>setAuthMode(authMode==="login"?"signup":"login")}/>}
+          <Text style={s.authFoot}>بياناتك تُستخدم لإدارة حسابك وطلبات السفر.</Text>
+        </View>}
+        <Text style={s.authCopyright}>TASNIM TRAVEL · YOUR JOURNEY, OUR CARE</Text>
+      </View>
+    </ScrollView>
+  </SafeAreaView>;
 
   return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
     <View style={s.top}><View style={s.brandHeader}><BrandEmblem size={46}/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
@@ -365,6 +390,7 @@ export default function App() {
 
 const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:C.pale},center:{alignItems:"center",justifyContent:"center",gap:12},
+ authPage:{flexGrow:1,backgroundColor:C.pale},authHero:{minHeight:390,alignItems:"center",justifyContent:"center",paddingTop:34,paddingBottom:42,overflow:"hidden"},authHeroImage:{resizeMode:"cover"},authHeroShade:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(4,39,43,0.72)"},authBrand:{color:C.white,fontSize:40,fontWeight:"900",marginTop:15},authEnglish:{color:"#E6D3A3",fontSize:14,fontWeight:"900",letterSpacing:4,marginTop:3},authGoldLine:{width:76,height:2,backgroundColor:C.gold,marginTop:14},authSlogan:{color:C.white,fontSize:17,fontWeight:"800",marginTop:14},authSubSlogan:{color:"#E1EBE7",fontSize:11,marginTop:7},authContent:{paddingHorizontal:18,marginTop:-24,paddingBottom:30},authPanel:{backgroundColor:C.white,borderRadius:25,padding:20,borderWidth:1,borderColor:C.border,elevation:5,shadowColor:"#123A3B",shadowOpacity:0.1,shadowRadius:16,shadowOffset:{width:0,height:7}},authTitle:{fontSize:22,fontWeight:"900",color:C.navy,textAlign:"right"},authDescription:{fontSize:12,color:C.muted,textAlign:"right",marginTop:7,marginBottom:13,lineHeight:20},authChoice:{flexDirection:"row-reverse",alignItems:"center",backgroundColor:"#F5F8F5",borderRadius:17,padding:14,marginTop:11,borderWidth:1,borderColor:C.border,minHeight:76},authChoiceIcon:{width:46,height:46,borderRadius:15,backgroundColor:"#E5F2EE",alignItems:"center",justifyContent:"center",marginLeft:12},authChoiceGlyph:{fontSize:23,color:C.blue,fontWeight:"900"},authChoiceTitle:{fontSize:15,color:C.navy,fontWeight:"900",textAlign:"right"},authChoiceSub:{fontSize:11,color:C.muted,textAlign:"right",marginTop:4},authArrow:{fontSize:27,color:C.gold,marginLeft:7},authFoot:{fontSize:10,color:C.muted,textAlign:"center",marginTop:17},authBack:{alignSelf:"flex-start",paddingVertical:8,paddingHorizontal:12,backgroundColor:C.sky,borderRadius:12,marginBottom:12},authBackText:{fontSize:12,fontWeight:"800",color:C.blue},authCopyright:{textAlign:"center",color:"#82938D",fontSize:9,fontWeight:"800",letterSpacing:1,marginTop:18},
  welcome:{flexGrow:1,justifyContent:"center",padding:22,backgroundColor:C.sky},
  splash:{backgroundColor:C.navy,alignItems:"center",justifyContent:"center"},
  splashArabic:{color:C.white,fontSize:42,fontWeight:"900",marginTop:22,letterSpacing:1},
