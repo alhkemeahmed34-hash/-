@@ -196,6 +196,36 @@ with check (
   and (storage.foldername(name))[1] = (select auth.uid())::text
 );
 
+-- Even privileged deletes must not orphan historical bookings. The normal
+-- client path is to set is_active=false; this trigger protects linked records.
+create or replace function private.prevent_service_delete_with_bookings()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+  if exists (
+    select 1
+    from public.bookings as booking
+    where booking.service_id = old.id
+  ) then
+    raise exception using
+      errcode = '23503',
+      message = 'Cannot delete a travel service linked to existing bookings; set is_active=false instead';
+  end if;
+
+  return old;
+end;
+$function$;
+
+revoke all on function private.prevent_service_delete_with_bookings() from public, anon, authenticated;
+drop trigger if exists prevent_service_delete_with_bookings on public.travel_services;
+create trigger prevent_service_delete_with_bookings
+before delete on public.travel_services
+for each row
+execute function private.prevent_service_delete_with_bookings();
+
 -- Prevent deleting, soft-deleting, or demoting the final active owner.
 -- app_metadata is not writable by authenticated clients; this trigger adds a
 -- database-level guard for trusted administrative operations as well.
