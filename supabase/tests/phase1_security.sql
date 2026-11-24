@@ -1,6 +1,6 @@
 -- TASNIM TRAVEL Phase 1 security smoke tests.
 -- Run ONLY against a local Supabase database after applying the migration:
---   supabase test db
+--   psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/phase1_security.sql
 -- This script creates fixed test fixtures inside a transaction and rolls them back.
 begin;
 
