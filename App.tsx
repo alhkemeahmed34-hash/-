@@ -1,6 +1,6 @@
 import "react-native-url-polyfill/auto";
 import React, { useEffect, useState } from "react";
-import { Alert, BackHandler, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, Dimensions } from "react-native";
+import { Alert, BackHandler, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator, Image, ImageBackground, useWindowDimensions } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, Session } from "@supabase/supabase-js";
 
@@ -22,22 +22,22 @@ const services: Service[] = [
   { image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=700&auto=format&fit=crop", title: "النقل", category: "transport", subtitle: "تنقل براحة" }
 ];
 const C = { navy:"#173B57", blue:"#2C83B9", sky:"#EAF5FB", pale:"#F4F8FB", white:"#FFFFFF", text:"#183247", muted:"#718596", border:"#E1EAF0", green:"#23856D" };
-const HERO_WIDTH = Dimensions.get("window").width - 36;
-const brandLogo = "https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F570227d3-cc56-45e9-8789-d55e121c4ce6/watermark:F/width:198?csig=AAAAAAAAAAAAAAAAAAAAAAJ9j_hORhUnWIZONgBbycpYTMBaW897V1qf4SZ3_ioJ&exp=1795531399&osig=AAAAAAAAAAAAAAAAAAAAAA5p71AijUp-rgra7fO4stNGCs_V7zRgurbU29Q6XFCv&signer=media-rpc&token=AAIAAU0AJDU3MDIyN2QzLWNjNTYtNDVlOS04Nzg5LWQ1NWUxMjFjNGNlNgAAAAABog4C31ivK9u4p_IKqY89P5zkmcSLejP-vR6IXh7MUsCWSGevbg&x-canva-quality=thumbnail";
 const heroSlides = [
-  { image: brandLogo, title: "", subtitle: "", brand: true },
-  { image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop", title: "اكتشف رحلتك مع تسنيم", subtitle: "مناظر طبيعية وتجارب لا تُنسى" },
-  { image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop", title: "وجهات بحرية ساحرة", subtitle: "اختر وجهتك القادمة ودع الترتيب علينا" },
-  { image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop", title: "عالم من الأماكن الجميلة", subtitle: "رحلتك تبدأ بخطوة مع تسنيم" }
+  { image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop", title: "اكتشف رحلتك مع تسنيم", subtitle: "وجهات مختارة وتجارب لا تُنسى" },
+  { image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop", title: "إجازتك القادمة تبدأ هنا", subtitle: "اختر وجهتك ودع تفاصيل الرحلة علينا" },
+  { image: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop", title: "العالم أقرب مما تتخيل", subtitle: "برامج سفر تناسب وقتك وميزانيتك" }
 ];
 
-function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType }: any) {
-  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"} style={s.input} />;
+function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
+  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput]} />;
 }
-function Button({ title, onPress, secondary=false, disabled=false }: any) {
-  return <Pressable disabled={disabled} onPress={onPress} style={[s.button, secondary && s.secondary, disabled && {opacity:0.55}]}><Text style={[s.buttonText, secondary && {color:C.blue}]}>{title}</Text></Pressable>;
+function Button({ title, onPress, secondary=false, disabled=false, loading=false }: any) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{disabled:disabled||loading,busy:loading}} disabled={disabled||loading} onPress={onPress} style={({pressed})=>[s.button,secondary&&s.secondary,(disabled||loading)&&{opacity:0.55},pressed&&!(disabled||loading)&&{opacity:0.82,transform:[{scale:0.99}]}]}>{loading?<ActivityIndicator color={secondary?C.blue:C.white}/>:<Text style={[s.buttonText,secondary&&{color:C.blue}]}>{title}</Text>}</Pressable>;
 }
 function msg(error: any) { return error?.message ?? "حدث خطأ غير متوقع. حاول مرة أخرى."; }
+function categoryLabel(category: string) { return services.find(item=>item.category===category)?.title ?? "خدمة سفر"; }
+function statusLabel(status: string) { return ({pending:"بانتظار المراجعة",under_review:"قيد المراجعة",confirmed:"تم التأكيد",rejected:"مرفوض",cancelled:"ملغي",completed:"مكتمل"} as Record<string,string>)[status] ?? status; }
+function formatPrice(price: any, currency="YER") { return price===null||price===undefined ? "السعر عند الاستفسار" : `${Number(price).toLocaleString("ar-YE")} ${currency==="YER"?"ر.ي":currency}`; }
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -48,23 +48,43 @@ export default function App() {
   const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]); const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
   const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("flight");
+  const [serviceDestination,setServiceDestination]=useState(""); const [serviceStartDate,setServiceStartDate]=useState(""); const [serviceEndDate,setServiceEndDate]=useState("");
   const [bookings, setBookings] = useState<any[]>([]); const [staffOpen, setStaffOpen] = useState(false);
   const [staffName, setStaffName] = useState(""); const [staffEmail, setStaffEmail] = useState(""); const [staffPassword, setStaffPassword] = useState("");
   const allPermissions = ["bookings.read","bookings.update","services.read","services.manage","customers.read","reports.read"];
   const permissionLabels: Record<string,string> = {"bookings.read":"عرض الحجوزات","bookings.update":"تحديث الحجوزات","services.read":"عرض الخدمات","services.manage":"إدارة الخدمات والأسعار","customers.read":"عرض بيانات العملاء","reports.read":"عرض التقارير"};
   const [staffPermissions, setStaffPermissions] = useState<string[]>(["bookings.read","bookings.update","services.read"]);
   const [busy, setBusy] = useState(false); const [catalog, setCatalog] = useState<any[]>([]); const [tab,setTab]=useState<"home"|"bookings"|"inquiries"|"account">("home"); const [detail,setDetail]=useState<Service|null>(null);
+  const [catalogLoading,setCatalogLoading]=useState(false); const [catalogError,setCatalogError]=useState("");
+  const [bookingsLoading,setBookingsLoading]=useState(false); const [bookingsError,setBookingsError]=useState("");
+  const { width: windowWidth } = useWindowDimensions();
+  const heroWidth = Math.max(260,windowWidth-36);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({data}) => { setSession(data.session); setLoading(false); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
-    return () => listener.subscription.unsubscribe();
+    let mounted = true;
+    let authEventReceived = false;
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
+      authEventReceived = true;
+      if (mounted) { setSession(next); setLoading(false); }
+    });
+    supabase.auth.getSession().then(({data,error}) => {
+      if (!mounted) return;
+      if (!authEventReceived) setSession(data.session);
+      if (error) Alert.alert("تعذر استعادة الجلسة",msg(error));
+      setLoading(false);
+    }).catch((error:any) => {
+      if (mounted) { setLoading(false); Alert.alert("تعذر الاتصال",msg(error)); }
+    });
+    return () => { mounted=false; listener.subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
     if (!session) { setCatalog([]); return; }
     refreshCatalog();
-    // Restore the customer's saved contact details so repeat bookings are faster.
+    const userRole = session.user.app_metadata?.role;
+    const userPermissions: string[] = session.user.app_metadata?.permissions ?? [];
+    if (["owner","staff"].includes(userRole) && (userRole==="owner" || userPermissions.includes("bookings.read"))) loadBookings();
+    // Restore saved contact details for faster repeat bookings.
     supabase.from("profiles").select("full_name,phone").eq("id", session.user.id).maybeSingle()
       .then(({ data }) => {
         if (data?.full_name) setFullName(data.full_name);
@@ -73,11 +93,15 @@ export default function App() {
   }, [session]);
 
   async function refreshCatalog() {
-    const { data, error } = await supabase.from("travel_services")
-      .select("id,category,title,description,price,currency")
-      .eq("is_active", true).order("created_at", {ascending:false});
-    if (error) Alert.alert("تعذر تحميل الخدمات", msg(error));
-    else setCatalog(data ?? []);
+    setCatalogLoading(true); setCatalogError("");
+    try {
+      const { data, error } = await supabase.from("travel_services")
+        .select("id,category,title,description,destination,price,currency,starts_at,ends_at,is_active,created_at")
+        .eq("is_active", true).order("created_at", {ascending:false});
+      if (error) throw error;
+      setCatalog(data ?? []);
+    } catch (error:any) { setCatalogError(msg(error)); }
+    finally { setCatalogLoading(false); }
   }
 
   const role = (session?.user.app_metadata?.role as Role | undefined) ?? "customer";
