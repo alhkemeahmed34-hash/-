@@ -55,8 +55,16 @@ export default function App() {
 
   useEffect(() => {
     if (!session) { setCatalog([]); return; }
-    supabase.from("travel_services").select("id,category,title,description,price,currency").eq("is_active", true).order("created_at", {ascending:false}).then(({data}) => setCatalog(data ?? []));
+    refreshCatalog();
   }, [session]);
+
+  async function refreshCatalog() {
+    const { data, error } = await supabase.from("travel_services")
+      .select("id,category,title,description,price,currency")
+      .eq("is_active", true).order("created_at", {ascending:false});
+    if (error) Alert.alert("تعذر تحميل الخدمات", msg(error));
+    else setCatalog(data ?? []);
+  }
 
   const role = (session?.user.app_metadata?.role as Role | undefined) ?? "customer";
   const isStaff = role === "staff" || role === "owner";
@@ -104,7 +112,7 @@ export default function App() {
     });
     setBusy(false);
     if (error) Alert.alert("تعذر إرسال الطلب", msg(error));
-    else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); }
+    else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); if (tab === "bookings") loadBookings(); }
   }
   async function changeBookingStatus(id: string, status: string) {
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
@@ -127,7 +135,7 @@ export default function App() {
     });
     setBusy(false);
     if (error) Alert.alert("تعذر حفظ الخدمة", msg(error));
-    else { Alert.alert("تمت إضافة الخدمة", "أصبحت الخدمة محفوظة في قاعدة البيانات."); setServiceTitle(""); setServiceDescription(""); setServicePrice(""); setServiceOpen(false); }
+    else { Alert.alert("تمت إضافة الخدمة", "أصبحت الخدمة محفوظة في قاعدة البيانات."); setServiceTitle(""); setServiceDescription(""); setServicePrice(""); setServiceOpen(false); await refreshCatalog(); }
   }
   async function deleteTravelService(id:string) { Alert.alert("حذف البرنامج","هل تريد حذف هذا البرنامج؟",[{text:"إلغاء",style:"cancel"},{text:"حذف",style:"destructive",onPress:async()=>{const {error}=await supabase.from("travel_services").delete().eq("id",id);if(error)Alert.alert("تعذر الحذف",msg(error));else setCatalog(old=>old.filter(x=>x.id!==id));}}]); }
 
@@ -160,7 +168,7 @@ export default function App() {
     </View>}
   </ScrollView></SafeAreaView>;
 
-  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView contentContainerStyle={s.page}>
+  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page}>
     <View style={s.top}><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View><View style={s.avatar}><Text>👤</Text></View></View>
     {isStaff ? <>
       <Text style={s.heading}>لوحة إدارة المكتب</Text><Text style={s.muted}>صلاحية الحساب: {role==="owner"?"المدير الرئيسي":"موظف"}</Text>
@@ -185,8 +193,20 @@ export default function App() {
         {!bookings.length && <Text style={s.note}>لا توجد حجوزات محمّلة. اضغط تحديث الحجوزات.</Text>}
       </> : <Text style={s.note}>ليس لديك صلاحية عرض الحجوزات.</Text>}
     </> : <>
-      {tab==="home" && <><ImageBackground source={{uri:"https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop"}} imageStyle={{borderRadius:22,opacity:0.88}} style={s.hero}><View style={s.heroShade}/><Text style={s.heroEyebrow}>TASNIM TRAVEL · أهلاً بك</Text><Text style={s.heroTitle}>اكتشف رحلتك مع تسنيم</Text><Text style={s.heroSub}>وجهات وبرامج سفر نرتبها لك بكل عناية</Text></ImageBackground><Text style={s.section}>اختر خدمتك</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={s.service} onPress={()=>setDetail(item)}><Image source={{uri:item.image}} style={s.serviceImage} resizeMode="cover"/><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text><Text style={s.price}>عرض التفاصيل ←</Text></Pressable>)}</View></>}
-      {detail && <View style={s.panel}><Button secondary title="رجوع للخدمات" onPress={()=>setDetail(null)}/><Text style={s.heading}>{detail.title}</Text><Text style={s.muted}>البرامج المتاحة والأسعار والمواعيد التي يضيفها مالك التطبيق</Text>{catalog.filter(x=>x.category===detail.category).map(item=><View key={item.id} style={s.booking}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.description||"لا توجد تفاصيل إضافية حالياً"}</Text><Text style={s.price}>{item.price===null?"السعر عند الاستفسار":Number(item.price).toLocaleString()+" "+item.currency}</Text><Button title="اطلب الحجز" onPress={()=>{setSelected(detail);setBookingOpen(true);}}/></View>)}{!catalog.some(x=>x.category===detail.category)&&<Text style={s.note}>لا توجد برامج مضافة حالياً. تابعنا، سيضيف المكتب البرامج والأسعار هنا.</Text>}</View>}
+      {tab==="home" && !detail && <><ImageBackground source={{uri:"https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1200&auto=format&fit=crop"}} imageStyle={{borderRadius:22,opacity:0.88}} style={s.hero}><View style={s.heroShade}/><Text style={s.heroEyebrow}>TASNIM TRAVEL · أهلاً بك</Text><Text style={s.heroTitle}>اكتشف رحلتك مع تسنيم</Text><Text style={s.heroSub}>وجهات وبرامج سفر نرتبها لك بكل عناية</Text></ImageBackground><Text style={s.section}>اختر خدمتك</Text><View style={s.grid}>{services.map(item=><Pressable key={item.category} style={s.service} onPress={()=>setDetail(item)}><Image source={{uri:item.image}} style={s.serviceImage} resizeMode="cover"/><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.muted}>{item.subtitle}</Text><Text style={s.price}>عرض التفاصيل ←</Text></Pressable>)}</View></>}
+      {tab==="home" && detail && <View style={s.detailPage}>
+        <Button secondary title="رجوع للخدمات" onPress={()=>setDetail(null)}/>
+        <Image source={{uri:detail.image}} style={s.detailImage} resizeMode="cover"/>
+        <Text style={s.heading}>{detail.title}</Text>
+        <Text style={s.muted}>{detail.subtitle} · البرامج والأسعار المعتمدة من مكتب تسنيم</Text>
+        {catalog.filter(x=>x.category===detail.category).map(item=><View key={item.id} style={s.booking}>
+          <Text style={s.choiceTitle}>{item.title}</Text>
+          <Text style={s.muted}>{item.description||"لا توجد تفاصيل إضافية حالياً"}</Text>
+          <Text style={s.price}>{item.price===null?"السعر عند الاستفسار":Number(item.price).toLocaleString()+" "+item.currency}</Text>
+          <Button title="اطلب الحجز" onPress={()=>{setSelected({...detail,title:item.title});setBookingOpen(true);}}/>
+        </View>)}
+        {!catalog.some(x=>x.category===detail.category)&&<Text style={s.note}>لا توجد برامج مضافة حالياً. يمكنك الاستفسار من المكتب.</Text>}
+      </View>}
       {tab==="bookings" && <View><Text style={s.heading}>حجوزاتي</Text><Button title="تحديث الحجوزات" onPress={loadBookings}/>{bookings.map(b=><View key={b.id} style={s.booking}><Text style={s.choiceTitle}>{b.details?.service_title||b.service_category}</Text><Text style={s.muted}>الحالة: {b.status} · {new Date(b.created_at).toLocaleDateString()}</Text></View>)}{!bookings.length&&<Text style={s.note}>اضغط تحديث الحجوزات لعرض طلباتك.</Text>}</View>}
       {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
       {tab==="account" && <View style={s.panel}><Text style={s.heading}>حسابي</Text><Text style={s.choiceTitle}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {session.user.user_metadata?.phone||"غير مضاف"}</Text><Button secondary title="تسجيل الخروج" onPress={signOut}/></View>}
@@ -194,8 +214,8 @@ export default function App() {
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)"/><Button title={busy?"جارٍ الإرسال...":"إرسال طلب الحجز"} onPress={createBooking} disabled={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
       <View style={s.promo}><Text style={s.choiceTitle}>نرتب رحلتك بكل عناية</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك.</Text></View>
     </>}
-    {!isStaff && <View style={s.bottomNav}>{([{id:"home",label:"الرئيسية",icon:"⌂"},{id:"bookings",label:"حجوزاتي",icon:"▣"},{id:"inquiries",label:"استفساراتي",icon:"?"},{id:"account",label:"حسابي",icon:"♙"}] as const).map(item=><Pressable key={item.id} onPress={()=>{setTab(item.id);setDetail(null);if(item.id==="bookings")loadBookings();}} style={s.navItem}><Text style={[s.navIcon,tab===item.id&&s.navActive]}>{item.icon}</Text><Text style={[s.navLabel,tab===item.id&&s.navActive]}>{item.label}</Text></Pressable>)}</View>}
-  </ScrollView></SafeAreaView>;
+    </ScrollView>{!isStaff && <View style={s.bottomNav}>{([{id:"home",label:"الرئيسية",icon:"⌂"},{id:"bookings",label:"حجوزاتي",icon:"▣"},{id:"inquiries",label:"استفساراتي",icon:"?"},{id:"account",label:"حسابي",icon:"♙"}] as const).map(item=><Pressable key={item.id} onPress={()=>{setTab(item.id);setDetail(null);if(item.id==="bookings")loadBookings();}} style={s.navItem}><Text style={[s.navIcon,tab===item.id&&s.navActive]}>{item.icon}</Text><Text style={[s.navLabel,tab===item.id&&s.navActive]}>{item.label}</Text></Pressable>)}</View>}
+  </View></SafeAreaView>;
 }
 
 const s=StyleSheet.create({
@@ -209,10 +229,11 @@ const s=StyleSheet.create({
  input:{borderWidth:1,borderColor:C.border,borderRadius:12,padding:13,marginTop:12,textAlign:"right",color:C.text,backgroundColor:C.pale},
  button:{backgroundColor:C.blue,borderRadius:13,padding:15,alignItems:"center",marginTop:13},secondary:{backgroundColor:C.sky,borderWidth:1,borderColor:"#CDE3F0"},buttonText:{color:C.white,fontWeight:"800",fontSize:14},
  note:{color:C.muted,fontSize:11,textAlign:"center",lineHeight:18,marginTop:14},
- page:{padding:18,paddingBottom:35},top:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",marginBottom:22},brandSmall:{color:C.navy,fontWeight:"900",letterSpacing:1,fontSize:16},avatar:{width:42,height:42,borderRadius:21,backgroundColor:C.white,alignItems:"center",justifyContent:"center"},
+ page:{padding:18,paddingBottom:120},top:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",marginBottom:22},brandSmall:{color:C.navy,fontWeight:"900",letterSpacing:1,fontSize:16},avatar:{width:42,height:42,borderRadius:21,backgroundColor:C.white,alignItems:"center",justifyContent:"center"},
  hero:{backgroundColor:C.navy,borderRadius:22,padding:21,minHeight:190,marginBottom:22,overflow:"hidden",justifyContent:"center"},heroEyebrow:{color:"#B9DDF1",textAlign:"right"},heroTitle:{color:C.white,textAlign:"right",fontSize:23,fontWeight:"900",marginTop:12,maxWidth:"85%"},heroSub:{color:"#D6E6F0",textAlign:"right",marginTop:9,fontSize:12},heroShade:{...StyleSheet.absoluteFillObject,backgroundColor:"rgba(10,39,60,0.42)",borderRadius:22},
  section:{color:C.text,textAlign:"right",fontWeight:"900",fontSize:18,marginTop:13,marginBottom:12},
  grid:{flexDirection:"row-reverse",flexWrap:"wrap",justifyContent:"space-between"},service:{width:"48%",backgroundColor:C.white,padding:15,borderRadius:17,marginBottom:11,borderWidth:1,borderColor:C.border},serviceSelected:{borderColor:C.blue,backgroundColor:C.sky},serviceImage:{width:"100%",height:104,borderRadius:12,marginBottom:10,backgroundColor:C.sky},
+ detailPage:{backgroundColor:C.white,padding:16,borderRadius:20,borderWidth:1,borderColor:C.border,marginBottom:18},detailImage:{width:"100%",height:190,borderRadius:16,marginTop:14,marginBottom:16,backgroundColor:C.sky},
  promo:{backgroundColor:"#E2F2F9",padding:17,borderRadius:17,marginTop:17},stats:{flexDirection:"row",gap:10,marginVertical:15},stat:{flex:1,backgroundColor:C.white,padding:15,borderRadius:15,alignItems:"center"},statNum:{color:C.blue,fontSize:24,fontWeight:"900",marginBottom:4},
  booking:{backgroundColor:C.white,padding:15,borderRadius:14,marginTop:9,borderWidth:1,borderColor:C.border},permissionRow:{flexDirection:"row-reverse",alignItems:"center",justifyContent:"space-between",paddingVertical:8,borderBottomWidth:1,borderBottomColor:C.border},statusActions:{flexDirection:"row-reverse",justifyContent:"space-around",marginTop:12},statusText:{color:C.blue,fontWeight:"800",fontSize:12},price:{color:C.green,textAlign:"right",fontWeight:"900",marginTop:5},bottomNav:{position:"absolute",bottom:0,left:0,right:0,backgroundColor:C.white,borderTopWidth:1,borderTopColor:C.border,flexDirection:"row-reverse",justifyContent:"space-around",paddingTop:10,paddingBottom:12},navItem:{alignItems:"center",minWidth:65},navIcon:{fontSize:21,color:C.muted,fontWeight:"900"},navLabel:{fontSize:10,color:C.muted,marginTop:3},navActive:{color:C.blue,fontWeight:"900"}
 });
