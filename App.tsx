@@ -115,7 +115,7 @@ export default function App() {
     else { Alert.alert("تم استلام طلبك", "وصل طلب الحجز إلى المكتب، وسنراجع الطلب ونتواصل معك."); setBookingOpen(false); setBookingNotes(""); if (tab === "bookings") loadBookings(); }
   }
   async function changeBookingStatus(id: string, status: string) {
-    const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+    const { error } = await supabase.rpc("update_booking_status", { p_booking_id: id, p_status: status });
     if (error) Alert.alert("تعذر تحديث الحجز", msg(error)); else loadBookings();
   }
   async function loadBookings() {
@@ -137,7 +137,7 @@ export default function App() {
     if (error) Alert.alert("تعذر حفظ الخدمة", msg(error));
     else { Alert.alert("تمت إضافة الخدمة", "أصبحت الخدمة محفوظة في قاعدة البيانات."); setServiceTitle(""); setServiceDescription(""); setServicePrice(""); setServiceOpen(false); await refreshCatalog(); }
   }
-  async function deleteTravelService(id:string) { Alert.alert("حذف البرنامج","هل تريد حذف هذا البرنامج؟",[{text:"إلغاء",style:"cancel"},{text:"حذف",style:"destructive",onPress:async()=>{const {error}=await supabase.from("travel_services").delete().eq("id",id);if(error)Alert.alert("تعذر الحذف",msg(error));else setCatalog(old=>old.filter(x=>x.id!==id));}}]); }
+  async function deleteTravelService(id:string) { Alert.alert("إخفاء البرنامج","هل تريد إخفاء هذا البرنامج من قائمة العملاء؟",[{text:"إلغاء",style:"cancel"},{text:"إخفاء",style:"destructive",onPress:async()=>{const {error}=await supabase.from("travel_services").update({is_active:false}).eq("id",id);if(error)Alert.alert("تعذر إخفاء البرنامج",msg(error));else setCatalog(old=>old.filter(x=>x.id!==id));}}]); }
 
   async function createStaff() {
     if (!staffName.trim() || !staffEmail.trim() || staffPassword.length < 10) { Alert.alert("بيانات الموظف", "أدخل الاسم والبريد وكلمة مرور من 10 أحرف على الأقل."); return; }
