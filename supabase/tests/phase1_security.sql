@@ -74,8 +74,9 @@ select pg_catalog.set_config(
 set local role authenticated;
 
 do $test$
-declare visible_count integer;
-declare booking_status text;
+declare
+  visible_count integer;
+  booking_status text;
 begin
   select count(*)::integer into visible_count
   from public.bookings
