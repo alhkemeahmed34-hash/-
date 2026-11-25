@@ -1,13 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<rect width="1024" height="1024" rx="170" fill="#FFFFFF"/>
-<g transform="translate(35 15) scale(1.02)">
-<path d="M210 570 A300 300 0 1 1 760 440" fill="none" stroke="#092F58" stroke-width="22" stroke-linecap="round"/>
-<path d="M215 570 A300 300 0 0 1 760 570" fill="none" stroke="#092F58" stroke-width="14" stroke-linecap="round"/>
-<path d="M270 285 Q470 205 690 270 M230 405 Q470 310 735 365 M270 505 Q490 420 750 465" fill="none" stroke="#092F58" stroke-width="13" stroke-linecap="round"/>
-<path d="M360 190 Q280 380 325 555 M500 155 Q455 350 490 540 M635 195 Q710 370 695 500" fill="none" stroke="#092F58" stroke-width="12" stroke-linecap="round"/>
-<path d="M125 650 C315 525 525 405 785 245 C665 420 470 570 205 740 C130 785 75 710 125 650Z" fill="#11A5B1"/>
-<path d="M145 690 C350 535 570 385 785 245 C610 455 405 620 205 750" fill="none" stroke="#D6A83C" stroke-width="10"/>
-<path d="M280 740 C390 660 505 610 650 620 C575 720 450 770 335 770Z" fill="#092F58"/>
-<path d="M355 810 C520 875 690 825 790 690 C760 850 590 930 430 900 C365 885 310 850 280 825Z" fill="#13A1AD"/>
-<g transform="translate(775 245) rotate(28)"><path d="M0 -76 L18 -15 L78 4 L78 20 L18 13 L18 72 L0 88 L-18 13 L-78 20 L-78 4 L-18 -15Z" fill="#092F58"/></g>
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="955" height="955" viewBox="0 0 955 955"><image x="0" y="0" width="955" height="955" preserveAspectRatio="none" xlink:href="data:image/jpeg;base64,__ICON64__"/></svg>
