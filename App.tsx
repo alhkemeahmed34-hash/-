@@ -33,7 +33,10 @@ function BrandEmblem({ size=92 }: { size?: number }) {
     <Image source={require("./assets/tasnim-icon.png")} style={{width:"100%",height:"100%"}} resizeMode="contain"/>
   </View>;
 }
-function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {\n  const isEmail = keyboardType === "email-address";\n  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlign={isEmail ? "left" : "right"} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={isEmail ? "none" : "sentences"} autoCorrect={!isEmail} autoComplete={isEmail ? "email" : "off"} importantForAutofill={isEmail ? "yes" : "auto"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput,isEmail&&s.emailInput]} />;\n}
+function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
+  const isEmail = keyboardType === "email-address";
+  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlign={isEmail ? "left" : "right"} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={isEmail ? "none" : "sentences"} autoCorrect={!isEmail} autoComplete={isEmail ? "email" : "off"} importantForAutofill={isEmail ? "yes" : "auto"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput,isEmail&&s.emailInput]} />;
+}
 function Button({ title, onPress, secondary=false, disabled=false, loading=false }: any) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{disabled:disabled||loading,busy:loading}} disabled={disabled||loading} onPress={onPress} style={({pressed})=>[s.button,secondary&&s.secondary,(disabled||loading)&&{opacity:0.55},pressed&&!(disabled||loading)&&{opacity:0.82,transform:[{scale:0.99}]}]}>{loading?<ActivityIndicator color={secondary?C.blue:C.white}/>:<Text style={[s.buttonText,secondary&&{color:C.blue}]}>{title}</Text>}</Pressable>;
 }
