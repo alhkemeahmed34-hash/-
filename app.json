@@ -7,7 +7,7 @@
     "userInterfaceStyle": "light",
     "icon": "./assets/tasnim-icon.png",
     "splash": {
-      "image": "./assets/tasnim-icon.png",
+      "image": "./assets/tasnim-logo.png",
       "backgroundColor": "#073F43",
       "resizeMode": "contain"
     },
