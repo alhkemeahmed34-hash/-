@@ -73,7 +73,17 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {\n    let active=true;\n    const checkConnection=async()=>{\n      try { const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),5000); await fetch(`${SUPABASE_URL}/rest/v1/`,{method:"GET",headers:{apikey:SUPABASE_PUBLISHABLE_KEY},signal:controller.signal}); clearTimeout(timer); if(active)setIsOnline(true); }\n      catch { if(active)setIsOnline(false); }\n    };\n    checkConnection(); const timer=setInterval(checkConnection,10000);\n    return ()=>{active=false;clearInterval(timer);};\n  },[]);\n\n  // Automatically rotate the scenic hero photos every five seconds.
+  useEffect(() => {
+    let active=true;
+    const checkConnection=async()=>{
+      try { const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),5000); await fetch(`${SUPABASE_URL}/rest/v1/`,{method:"GET",headers:{apikey:SUPABASE_PUBLISHABLE_KEY},signal:controller.signal}); clearTimeout(timer); if(active)setIsOnline(true); }
+      catch { if(active)setIsOnline(false); }
+    };
+    checkConnection(); const timer=setInterval(checkConnection,10000);
+    return ()=>{active=false;clearInterval(timer);};
+  },[]);
+
+  // Automatically rotate the scenic hero photos every five seconds.
   useEffect(() => {
     if (!session || tab!=="home" || detail) return;
     const timer=setInterval(() => {
@@ -105,8 +115,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!session) { setCatalog([]); return; }
+    if (!session || !isOnline) { if(!session)setCatalog([]); return; }
     refreshCatalog();
+    if (session.user.app_metadata?.role !== "owner" && session.user.app_metadata?.role !== "staff") {
+      supabase.from("customer_notifications").select("id,title,message").eq("customer_id",session.user.id).eq("is_read",false).order("created_at",{ascending:true}).limit(10).then(async ({data,error})=>{
+        if(error || !data?.length) return;
+        await supabase.from("customer_notifications").update({is_read:true}).in("id",data.map((item:any)=>item.id));
+        Alert.alert("إشعار من تسنيم",data.map((item:any)=>`${item.title}\n${item.message}`).join("\n\n"));
+      });
+    }
     const userRole = session.user.app_metadata?.role;
     const userPermissions: string[] = session.user.app_metadata?.permissions ?? [];
     if (["owner","staff"].includes(userRole) && (userRole==="owner" || userPermissions.includes("bookings.read"))) loadBookings();
@@ -138,6 +155,7 @@ export default function App() {
   const canManageServices = role === "owner" || permissions.includes("services.manage");
 
   async function authenticate() {
+    if (!isOnline) { Alert.alert("لا يوجد اتصال بالإنترنت","يرجى إعادة الاتصال بالإنترنت ثم المحاولة."); return; }
     if (!email.trim() || password.length < 8) { Alert.alert("تحقق من البيانات", "أدخل البريد وكلمة المرور (8 أحرف على الأقل)."); return; }
     setBusy(true);
     try {
@@ -216,7 +234,7 @@ export default function App() {
     setBusy(true);
     const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
     setBusy(false);
-    if (error) Alert.alert("تعذر تحديث الحجز",msg(error)); else loadBookings();
+    if (error) Alert.alert("تعذر تحديث الحجز",msg(error)); else { Alert.alert("تم تحديث حالة الطلب",status==="confirmed"?"تم تأكيد الحجز وإرسال إشعار إلى العميل.":status==="rejected"?"تم رفض الطلب وإرسال إشعار إلى العميل.":"تم تحديث حالة الطلب."); loadBookings(); }
   }
   async function loadBookings() {
     if (!session) return;
@@ -230,7 +248,15 @@ export default function App() {
     } catch(error:any) { setBookingsError(msg(error)); }
     finally { setBookingsLoading(false); }
   }
-  async function sendAssistantMessage() {\n    const prompt=chatInput.trim(); if(!prompt || chatBusy) return;\n    const next=[...chatMessages,{role:"user",content:prompt}]; setChatMessages(next); setChatInput(""); setChatBusy(true);\n    try { const {data,error}=await supabase.functions.invoke("tasnim-assistant",{body:{messages:next.slice(-12).map((m:any)=>({role:m.role,content:m.content}))}}); if(error || data?.error) throw new Error(data?.error||msg(error)); setChatMessages(old=>[...old,{role:"assistant",content:data.reply}]); }\n    catch(e:any){setChatMessages(old=>[...old,{role:"assistant",content:e?.message||"تعذر الاتصال بالمساعد حالياً. حاول مرة أخرى."}]);}\n    finally{setChatBusy(false);}\n  }\n\n  async function createTravelService() {
+  async function sendAssistantMessage() {\n    const prompt=chatInput.trim(); if(!prompt || chatBusy) return;\n    const next=[...chatMessages,{role:"user",content:prompt}]; setChatMessages(next); setChatInput(""); setChatBusy(true);\n    try { const {data,error}=await supabase.functions.invoke("tasnim-assistant",{body:{messages:next.slice(-12).map((m:any)=>({role:m.role,content:m.content}))}}); if(error || data?.error) throw new Error(data?.error||msg(error)); setChatMessages(old=>[...old,{role:"assistant",content:data.reply}]); }\n    catch(e:any){setChatMessages(old=>[...old,{role:"assistant",content:e?.message||"تعذر الاتصال بالمساعد حالياً. حاول مرة أخرى."}]);}\n    finally{setChatBusy(false);}\n  }\n\n  async function sendAssistantMessage() {
+    const prompt=chatInput.trim(); if(!prompt || chatBusy) return;
+    const next=[...chatMessages,{role:"user",content:prompt}]; setChatMessages(next); setChatInput(""); setChatBusy(true);
+    try { const {data,error}=await supabase.functions.invoke("tasnim-assistant",{body:{messages:next.slice(-12).map((m:any)=>({role:m.role,content:m.content}))}}); if(error || data?.error) throw new Error(data?.error||msg(error)); setChatMessages(old=>[...old,{role:"assistant",content:data.reply}]); }
+    catch(e:any){setChatMessages(old=>[...old,{role:"assistant",content:e?.message||"تعذر الاتصال بالمساعد حالياً. حاول مرة أخرى."}]);}
+    finally{setChatBusy(false);}
+  }
+
+  async function createTravelService() {
     if (!serviceTitle.trim()) { Alert.alert("بيانات الخدمة", "اكتب اسم الخدمة أو البرنامج."); return; }
     const price = servicePrice.trim() ? Number(servicePrice) : null;
     if (price !== null && (!Number.isFinite(price) || price < 0)) { Alert.alert("السعر غير صحيح", "أدخل سعراً صحيحاً أو اتركه فارغاً."); return; }
@@ -291,7 +317,8 @@ export default function App() {
         <Text style={s.authSlogan}>نأخذك إلى وجهتك… بثقة واهتمام</Text>
         <Text style={s.authSubSlogan}>السياحة والسفريات · رحلتك تبدأ من هنا</Text>
       </ImageBackground>
-      <View style={s.authContent}>\n        {!isOnline && <View style={s.offlineNotice}><Text style={s.offlineTitle}>لا يوجد اتصال بالإنترنت</Text><Text style={s.offlineText}>يرجى إعادة الاتصال بالإنترنت. لن تتمكن من تسجيل الدخول أو استخدام الخدمات حتى يعود الاتصال.</Text></View>}
+      <View style={s.authContent}>
+        {!isOnline && <View style={s.offlineNotice}><Text style={s.offlineTitle}>لا يوجد اتصال بالإنترنت</Text><Text style={s.offlineText}>يرجى إعادة الاتصال بالإنترنت. لن تتمكن من تسجيل الدخول أو استخدام الخدمات حتى يعود الاتصال.</Text></View>}\n        {!isOnline && <View style={s.offlineNotice}><Text style={s.offlineTitle}>لا يوجد اتصال بالإنترنت</Text><Text style={s.offlineText}>يرجى إعادة الاتصال بالإنترنت. لن تتمكن من تسجيل الدخول أو استخدام الخدمات حتى يعود الاتصال.</Text></View>}
         {!entry ? <View style={s.authPanel}>
           <Text style={s.authTitle}>أهلاً بك في عالم تسنيم</Text>
           <Text style={s.authDescription}>اختر بوابتك للوصول إلى خدماتنا وبرامج السفر.</Text>
@@ -374,7 +401,8 @@ export default function App() {
         {!catalog.some(x=>detail.category==="umrah" ? ["umrah","hajj"].includes(x.category) : x.category===detail.category)&&<View style={s.emptyState}><Text style={s.emptyTitle}>لا توجد عروض منشورة لهذا القسم حالياً</Text><Text style={s.muted}>يمكنك إرسال استفسار للفريق وسيتم التواصل معك.</Text><Button title="إرسال استفسار" onPress={()=>{setSelected(detail);setSelectedServiceId(null);setBookingOpen(true);}}/></View>}
       </View>}
       {tab==="bookings" && <View><Text style={s.heading}>حجوزاتي</Text><Text style={s.muted}>تابع حالة طلبات السفر من هنا.</Text><Button title="تحديث الحجوزات" onPress={loadBookings} loading={bookingsLoading}/>{bookingsLoading?<ActivityIndicator color={C.blue}/>:bookingsError?<View style={s.panel}><Text style={s.muted}>{bookingsError}</Text><Button secondary title="إعادة المحاولة" onPress={loadBookings}/></View>:bookings.map(b=><View key={b.id} style={s.booking}><View style={s.offerTopLine}><Text style={s.statusBadge}>{statusLabel(b.status)}</Text><Text style={s.offerCategory}>{categoryLabel(b.service_category)}</Text></View><Text style={s.choiceTitle}>{b.details?.service_title||categoryLabel(b.service_category)}</Text><Text style={s.muted}>{new Date(b.created_at).toLocaleDateString("ar-YE")}</Text>{b.details?.notes?<Text style={s.muted}>ملاحظاتك: {b.details.notes}</Text>:null}</View>)}{!bookingsLoading&&!bookingsError&&!bookings.length&&<Text style={s.note}>لا توجد حجوزات حتى الآن. ابدأ باختيار خدمة وأرسل طلبك.</Text>}</View>}
-      {tab==="assistant" && <View style={s.panel}><Text style={s.heading}>مساعد تسنيم الذكي</Text><Text style={s.muted}>اسأل عن السفر والعروض والحج والعمرة. الأسعار والتوافر النهائي يؤكدهما فريق تسنيم.</Text><View style={s.chatHistory}>{chatMessages.length===0?<Text style={s.note}>مرحباً! أنا مساعد تسنيم. كيف أقدر أساعدك في رحلتك؟</Text>:chatMessages.map((m:any,i:number)=><View key={i} style={[s.chatBubble,m.role==="user"?s.chatUser:s.chatAssistant]}><Text style={s.chatText}>{m.content}</Text></View>)}{chatBusy&&<ActivityIndicator color={C.blue}/>}</View><Field value={chatInput} onChangeText={setChatInput} placeholder="اكتب سؤالك هنا..." multiline/><Button title={chatBusy?"جارٍ الرد...":"إرسال السؤال"} onPress={sendAssistantMessage} disabled={chatBusy||!chatInput.trim()||!isOnline}/></View>}\n      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
+      {tab==="assistant" && <View style={s.panel}><Text style={s.heading}>مساعد تسنيم الذكي</Text><Text style={s.muted}>اسأل عن السفر والعروض والحج والعمرة. الأسعار والتوافر النهائي يؤكدهما فريق تسنيم.</Text><View style={s.chatHistory}>{chatMessages.length===0?<Text style={s.note}>مرحباً! أنا مساعد تسنيم. كيف أقدر أساعدك في رحلتك؟</Text>:chatMessages.map((m:any,i:number)=><View key={i} style={[s.chatBubble,m.role==="user"?s.chatUser:s.chatAssistant]}><Text style={s.chatText}>{m.content}</Text></View>)}{chatBusy&&<ActivityIndicator color={C.blue}/>}</View><Field value={chatInput} onChangeText={setChatInput} placeholder="اكتب سؤالك هنا..." multiline/><Button title={chatBusy?"جارٍ الرد...":"إرسال السؤال"} onPress={sendAssistantMessage} disabled={chatBusy||!chatInput.trim()||!isOnline}/></View>}\n      {tab==="assistant" && <View style={s.panel}><Text style={s.heading}>مساعد تسنيم الذكي</Text><Text style={s.muted}>اسأل عن السفر والعروض والحج والعمرة. الأسعار والتوافر النهائي يؤكدهما فريق تسنيم.</Text><View style={s.chatHistory}>{chatMessages.length===0?<Text style={s.note}>مرحباً! أنا مساعد تسنيم. كيف أقدر أساعدك في رحلتك؟</Text>:chatMessages.map((m:any,i:number)=><View key={i} style={[s.chatBubble,m.role==="user"?s.chatUser:s.chatAssistant]}><Text style={[s.chatText,m.role==="assistant"&&{color:C.white}]}>{m.content}</Text></View>)}{chatBusy&&<ActivityIndicator color={C.blue}/>}</View><Field value={chatInput} onChangeText={setChatInput} placeholder="اكتب سؤالك هنا..." multiline/><Button title={chatBusy?"جارٍ الرد...":"إرسال السؤال"} onPress={sendAssistantMessage} disabled={chatBusy||!chatInput.trim()||!isOnline}/></View>}
+      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
       {tab==="account" && <View style={s.panel}><Text style={s.heading}>حسابي</Text><Text style={s.choiceTitle}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {session.user.user_metadata?.phone||"غير مضاف"}</Text><Button secondary title="تسجيل الخروج" onPress={signOut}/></View>}
       {tab==="home" && !detail && <View style={s.adminSection}><Text style={s.section}>أحدث عروض تسنيم</Text>{catalogLoading?<ActivityIndicator color={C.blue}/>:catalogError?<View style={s.panel}><Text style={s.muted}>تعذر تحميل العروض حالياً.</Text><Button secondary title="إعادة المحاولة" onPress={refreshCatalog}/></View>:catalog.slice(0,4).map(item=><Pressable key={item.id} style={s.offerCard} onPress={()=>{setSelected({image:(services.find(x=>x.category===item.category)|| (item.category==="hajj"?services.find(x=>x.category==="umrah"):undefined))?.image||services[2].image,title:item.title,category:item.category,subtitle:item.description});setSelectedServiceId(item.id);setBookingOpen(true);}}><Image source={{uri:(services.find(x=>x.category===item.category)||(item.category==="hajj"?services.find(x=>x.category==="umrah"):undefined))?.image||services[2].image}} style={s.offerImage}/><View style={s.offerContent}><Text style={s.offerCategory}>{categoryLabel(item.category)}</Text><Text style={s.offerTitle}>{item.title}</Text>{item.destination?<Text style={s.muted}>{item.destination}</Text>:null}<Text style={s.offerPrice}>{formatPrice(item.price,item.currency)}</Text><Text style={s.offerAction}>اطلب الحجز ←</Text></View></Pressable>)}{!catalogLoading&&!catalogError&&!catalog.length?<View style={s.emptyState}><Text style={s.emptyTitle}>العروض الجديدة قريباً</Text><Text style={s.muted}>نعمل على تجهيز برامج سفر مميزة. يمكنك إرسال استفسارك الآن.</Text></View>:null}</View>}
       {bookingOpen && <View style={s.panel}><Text style={s.heading}>طلب حجز · {selected.title}</Text><Text style={s.muted}>أدخل بيانات التواصل وسيصل طلبك إلى فريق تسنيم.</Text><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/><Field value={bookingNotes} onChangeText={setBookingNotes} placeholder="تفاصيل الرحلة أو الوجهة (اختياري)" multiline/><Button title="إرسال طلب الحجز" onPress={createBooking} disabled={busy} loading={busy}/><Button secondary title="إلغاء" onPress={()=>setBookingOpen(false)}/></View>}
