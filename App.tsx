@@ -303,7 +303,7 @@ export default function App() {
     finally { setBusy(false); }
   }
 
-  if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="light-content" backgroundColor={C.navy}/><BrandEmblem size={132}/><Text style={s.splashArabic}>تسنيم</Text><View style={s.splashDivider}/><Text style={s.splashEnglish}>TASNIM TRAVEL</Text><Text style={s.splashTagline}>رحلتك تبدأ من هنا</Text></SafeAreaView>;
+  if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="dark-content" backgroundColor="#FFFFFF"/><Image source={require("./assets/tasnim-logo.png")} style={{width:"88%",height:390}} resizeMode="contain"/></SafeAreaView>;
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
   if (!session || !isOnline) return <SafeAreaView style={s.safe}>
@@ -311,11 +311,8 @@ export default function App() {
     <ScrollView contentContainerStyle={s.authPage} keyboardShouldPersistTaps="handled">
       <ImageBackground source={{uri:"https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1400&auto=format&fit=crop"}} style={s.authHero} imageStyle={s.authHeroImage}>
         <View style={s.authHeroShade}/>
-        <BrandEmblem size={116}/>
-        <Text style={s.authBrand}>تسنيم</Text><Text style={s.authEnglish}>TASNIM TRAVEL</Text>
-        <View style={s.authGoldLine}/>
+        <Image source={require("./assets/tasnim-logo.png")} style={{width:"88%",height:330,backgroundColor:"#FFFFFF",borderRadius:18}} resizeMode="contain"/>
         <Text style={s.authSlogan}>نأخذك إلى وجهتك… بثقة واهتمام</Text>
-        <Text style={s.authSubSlogan}>السياحة والسفريات · رحلتك تبدأ من هنا</Text>
       </ImageBackground>
       <View style={s.authContent}>
         {!isOnline && <View style={s.offlineNotice}><Text style={s.offlineTitle}>لا يوجد اتصال بالإنترنت</Text><Text style={s.offlineText}>يرجى إعادة الاتصال بالإنترنت. لن تتمكن من تسجيل الدخول أو استخدام الخدمات حتى يعود الاتصال.</Text></View>}
