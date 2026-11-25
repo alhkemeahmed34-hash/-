@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/tasnim-icon.png",
         "backgroundColor": "#073F43"
-      }
+      },
+      "softwareKeyboardLayoutMode": "resize"
     }
   }
 }
