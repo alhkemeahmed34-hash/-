@@ -342,7 +342,7 @@ export default function App() {
     </ScrollView>
   </SafeAreaView>;
 
-  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><ScrollView style={{flex:1}} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
+  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}><ScrollView style={{flex:1}} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
     <View style={s.top}><View style={s.brandHeader}><BrandEmblem size={46}/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>
     {isStaff ? <>
       <View style={s.adminHero}><Text style={s.adminEyebrow}>TASNIM TRAVEL · CONTROL CENTER</Text><Text style={s.adminTitle}>{role==="owner"?"لوحة تحكم المالك":"لوحة إدارة المكتب"}</Text><Text style={s.adminSubtitle}>تابع الحجوزات وأدر برامج السفر والعروض من مكان واحد.</Text><View style={s.ownerBadge}><Text style={s.ownerBadgeText}>{role==="owner"?"المالك الرئيسي":"حساب موظف"}</Text></View></View>
@@ -404,7 +404,7 @@ export default function App() {
       {tab==="home" && !detail && <View style={s.promo}><Text style={s.promoTitle}>رحلتك تبدأ بخطوة</Text><Text style={s.muted}>أرسل طلبك وسيقوم فريق تسنيم بمراجعته والتواصل معك بكل عناية.</Text></View>}
     </>}
     </ScrollView>{!isStaff && <View style={s.bottomNav}>{([{id:"home",label:"الرئيسية",icon:"⌂"},{id:"bookings",label:"حجوزاتي",icon:"▣"},{id:"assistant",label:"مساعد تسنيم",icon:"✦"},{id:"inquiries",label:"استفساراتي",icon:"?"},{id:"account",label:"حسابي",icon:"♙"}] as const).map(item=><Pressable key={item.id} onPress={()=>{setTab(item.id);setDetail(null);if(item.id==="bookings")loadBookings();}} style={s.navItem}><Text style={[s.navIcon,tab===item.id&&s.navActive]}>{item.icon}</Text><Text style={[s.navLabel,tab===item.id&&s.navActive]}>{item.label}</Text></Pressable>)}</View>}
-  </SafeAreaView>;
+  </KeyboardAvoidingView></SafeAreaView>;
 }
 
 const s=StyleSheet.create({
