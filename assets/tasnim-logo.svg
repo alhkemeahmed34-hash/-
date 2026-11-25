@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1100" viewBox="0 0 900 1100">
+<rect width="900" height="1100" fill="#FFFFFF"/>
+<g transform="translate(70 45)">
+  <path d="M210 515 A250 250 0 1 1 670 420" fill="none" stroke="#092F58" stroke-width="17" stroke-linecap="round"/>
+  <path d="M205 520 A250 250 0 0 1 665 520" fill="none" stroke="#092F58" stroke-width="12" stroke-linecap="round"/>
+  <path d="M265 270 Q405 210 555 245 M230 365 Q400 295 590 330 M265 450 Q405 390 610 410" fill="none" stroke="#092F58" stroke-width="9" stroke-linecap="round"/>
+  <path d="M340 180 Q270 320 300 485 M445 145 Q405 300 430 455 M540 175 Q585 290 585 365" fill="none" stroke="#092F58" stroke-width="8" stroke-linecap="round"/>
+  <path d="M165 580 C300 490 455 420 650 285 C560 400 425 505 225 650 C170 690 125 645 165 580Z" fill="#13A1AD"/>
+  <path d="M190 620 C340 505 500 400 660 285 C535 420 390 535 220 665" fill="none" stroke="#D6A83C" stroke-width="7"/>
+  <path d="M260 665 C350 610 440 565 535 565 C490 635 410 680 315 690Z" fill="#092F58"/>
+  <path d="M320 720 C445 775 580 755 665 650 C645 770 515 840 385 825 C335 815 295 780 270 750Z" fill="#13A1AD"/>
+  <path d="M620 205 l70 -15 -23 36 38 16 -40 8 -5 46 -20 -40 -42 5 28 -26 -23 -27 42 7z" fill="#092F58" transform="rotate(-18 650 230)"/>
+</g>
+<text x="450" y="875" text-anchor="middle" direction="rtl" font-family="Arial,sans-serif" font-size="83" font-weight="bold" fill="#092F58">تسنيم للسياحة والسفريات</text>
+<text x="450" y="960" text-anchor="middle" font-family="Arial,sans-serif" font-size="48" font-weight="bold" letter-spacing="15" fill="#13A1AD">TASNIM TRAVEL</text>
+</svg>
