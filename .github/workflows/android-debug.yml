@@ -1,5 +1,6 @@
 name: Android standalone build
 # Rebuild the latest reviewed TASNIM TRAVEL release
+# Strict TypeScript validation is required before APK packaging
 
 on:
   workflow_dispatch:
