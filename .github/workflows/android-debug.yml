@@ -27,6 +27,30 @@ jobs:
         run: npx tsc --noEmit
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
+      - name: Build separate ARM APKs
+        working-directory: android/app
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('build.gradle')
+          s = p.read_text()
+          marker = 'android {'
+          block = """android {
+              splits {
+                  abi {
+                      enable true
+                      reset()
+                      include 'armeabi-v7a', 'arm64-v8a'
+                      universalApk false
+                  }
+              }
+          """
+          if marker not in s:
+              raise SystemExit('Could not find Android Gradle block')
+          if 'universalApk false' not in s:
+              s = s.replace(marker, block, 1)
+          p.write_text(s)
+          PY
       - name: Enable Android release size optimizations
         working-directory: android
         run: |
@@ -47,6 +71,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tasnim-travel-android-release
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 7
