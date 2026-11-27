@@ -382,7 +382,7 @@ export default function App() {
     finally { setBusy(false); }
   }
 
-  if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="dark-content" backgroundColor="#FFFFFF"/><Image source={require("./assets/tasnim-logo.png")} style={{width:"88%",height:390}} resizeMode="contain"/></SafeAreaView>;
+  if (splashVisible) return <SafeAreaView style={[s.safe,s.splash]}><StatusBar barStyle="light-content" backgroundColor={C.navy}/><Text style={s.splashArabic}>تسنيم</Text><Text style={s.splashEnglish}>TASNIM TRAVEL</Text><View style={s.splashDivider}/><Text style={s.splashTagline}>سفرك يبدأ بثقة... وذكرياتك تبدأ معنا.</Text><Text style={s.splashSubline}>للسياحة والسفريات</Text></SafeAreaView>;
   if (loading) return <SafeAreaView style={[s.safe,s.center]}><ActivityIndicator size="large" color={C.blue}/><Text style={s.muted}>جارٍ الاتصال بالخادم...</Text></SafeAreaView>;
 
   if (!session || !isOnline) return <SafeAreaView style={s.safe}>
@@ -423,7 +423,7 @@ export default function App() {
     </ScrollView></KeyboardAvoidingView>
   </SafeAreaView>;
 
-  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}><ScrollView style={{flex:1}} scrollEnabled={tab!=="assistant"} contentContainerStyle={[s.page,tab==="assistant"&&{paddingTop:0,paddingBottom:0,flexGrow:1}]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}><ScrollView style={{flex:1}} scrollEnabled={tab!=="assistant"} contentContainerStyle={[s.page,tab==="assistant"&&{paddingTop:0,paddingBottom:0,flexGrow:1}]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
     {tab!=="assistant" && <View style={s.top}><View style={s.brandHeader}><BrandEmblem size={46}/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>}
     {isStaff ? <>
       {adminPage==="home" && <>
@@ -569,7 +569,7 @@ const s=StyleSheet.create({
  splashArabic:{color:C.white,fontSize:42,fontWeight:"900",marginTop:22,letterSpacing:1},
  splashDivider:{width:176,height:2,backgroundColor:C.gold,marginTop:12,marginBottom:12},
  splashEnglish:{color:C.gold,fontSize:17,fontWeight:"900",letterSpacing:3},
- splashTagline:{color:"#D9E8E3",fontSize:13,marginTop:14},
+ splashTagline:{color:"#D9E8E3",fontSize:14,marginTop:14,textAlign:"center",paddingHorizontal:20},splashSubline:{color:"#B8D5D2",fontSize:11,marginTop:12,letterSpacing:1},
  logo:{alignSelf:"center",width:74,height:74,borderRadius:24,backgroundColor:C.white,alignItems:"center",justifyContent:"center",marginBottom:12},
  loginBrandMark:{alignSelf:"center",width:104,height:104,borderRadius:32,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",marginBottom:18,borderWidth:5,borderColor:C.gold},loginBrandLetter:{color:C.gold,fontSize:58,fontWeight:"900",fontStyle:"italic"},headerLogo:{width:48,height:48,borderRadius:15,backgroundColor:C.navy,alignItems:"center",justifyContent:"center",borderWidth:2,borderColor:C.gold},headerLogoText:{color:C.gold,fontSize:28,fontWeight:"900",fontStyle:"italic"},brandHeader:{flexDirection:"row",alignItems:"center",gap:9},avatarLetter:{color:C.navy,fontWeight:"900",fontSize:17},
  brand:{textAlign:"center",fontSize:25,fontWeight:"900",letterSpacing:2,color:C.navy},brandAr:{textAlign:"center",fontSize:18,fontWeight:"800",color:C.text,marginTop:7},tagline:{textAlign:"center",color:C.muted,marginTop:7,marginBottom:25},
