@@ -490,8 +490,8 @@ export default function App() {
       {tab==="home" && detail && <View style={s.detailPage}>
         <Pressable accessibilityRole="button" accessibilityLabel="رجوع إلى الخدمات السابقة" onPress={()=>setDetail(null)} style={s.detailBack}><Text style={s.detailBackArrow}>↶</Text><Text style={s.detailBackText}>رجوع</Text></Pressable>
         <Image source={{uri:serviceImages[detail.category]||detail.image}} style={s.detailImage} resizeMode="cover"/>
-        <Text style={s.heading}>{detail.title}</Text>
-        <Text style={s.muted}>{detail.subtitle} · البرامج والأسعار المعتمدة من مكتب تسنيم</Text>
+        <Text style={s.heading}>{serviceTexts[detail.category]?.title||detail.title}</Text>
+        <Text style={s.muted}>{serviceTexts[detail.category]?.subtitle||detail.subtitle} · البرامج والأسعار المعتمدة من مكتب تسنيم</Text>
         {catalog.filter(x=>detail.category==="umrah" ? ["umrah","hajj"].includes(x.category) : x.category===detail.category).map(item=><View key={item.id} style={s.booking}>
           <Text style={s.choiceTitle}>{item.title}</Text>
           {item.destination?<Text style={s.muted}>الوجهة: {item.destination}</Text>:null}
@@ -533,7 +533,7 @@ export default function App() {
         </View>
         <Text style={s.chatDisclaimer}>معلومات الأسعار والمواعيد النهائية يؤكدها فريق تسنيم.</Text>
       </View>}
-      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
+      {tab==="inquiries" && <View style={s.panel}><Text style={s.heading}>استفساراتك</Text><Text style={s.muted}>للاستفسار عن الأسعار والمواعيد، اختر الخدمة وأرسل طلباً للمكتب وسيتواصل معك الفريق.</Text>{services.map(item=><Pressable key={item.category} style={s.choice} onPress={()=>{setSelected(item);setSelectedServiceId(null);setBookingOpen(true);}}><Text style={s.choiceTitle}>{serviceTexts[item.category]?.title||item.title}</Text><Text style={s.arrow}>‹</Text></Pressable>)}</View>}
       {tab==="account" && <View style={s.panel}>
         <Text style={s.heading}>حسابي</Text>
         <View style={s.accountProfile}><View style={s.accountAvatar}><Text style={s.accountAvatarText}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View><Text style={s.accountName}>{session.user.user_metadata?.full_name||"عميل تسنيم"}</Text><Text style={s.muted}>{session.user.email}</Text><Text style={s.muted}>رقم الهاتف: {phone||session.user.user_metadata?.phone||"غير مضاف"}</Text></View>
