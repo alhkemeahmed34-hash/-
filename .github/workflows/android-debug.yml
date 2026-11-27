@@ -1,4 +1,5 @@
 name: Android standalone build
+# Rebuild the latest reviewed TASNIM TRAVEL release
 
 on:
   workflow_dispatch:
