@@ -145,6 +145,7 @@ export default function App() {
     try {
       const {data,error}=await supabase.from("app_settings").select("value").eq("key","home_hero").maybeSingle();
       if(error) throw error;
+      if(!data?.value) return;
       if(data?.value?.slides && Array.isArray(data.value.slides) && data.value.slides.length) { setBannerSlides(data.value.slides); setBannerSlidesDraft(data.value.slides); setHeroImage(String(data.value.slides[0].image||heroSlides[0].image)); setHeroTitle(String(data.value.slides[0].title||heroSlides[0].title)); setHeroSubtitle(String(data.value.slides[0].subtitle||heroSlides[0].subtitle)); }
       if(data?.value?.serviceTexts && typeof data.value.serviceTexts==="object") { const saved={...Object.fromEntries(services.map(x=>[x.category,{title:x.title,subtitle:x.subtitle}])),...data.value.serviceTexts}; setServiceTexts(saved); setServiceTextDrafts(saved); }
       if(data?.value?.title) setHeroTitle(String(data.value.title));
