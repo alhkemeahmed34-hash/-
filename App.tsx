@@ -396,7 +396,7 @@ export default function App() {
           <Text style={s.authDescription}>{authMode==="signup"?"أنشئ حسابك لتتمكن من متابعة حجوزاتك.":"سجّل الدخول للوصول إلى حسابك وخدمات تسنيم."}</Text>
           {authMode==="signup" && <><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/></>}
           <Field value={email} onChangeText={setEmail} placeholder="البريد الإلكتروني" keyboardType="email-address"/>
-          <Field value={password} onChangeText={(value)=>{setPassword(value);setPasswordError("");}} placeholder="كلمة المرور" secureTextEntry error={!!passwordError}/>{!!passwordError&&<Text style={s.inputErrorText}>{passwordError}</Text>}
+          <Field value={password} onChangeText={(value:string)=>{setPassword(value);setPasswordError("");}} placeholder="كلمة المرور" secureTextEntry error={!!passwordError}/>{!!passwordError&&<Text style={s.inputErrorText}>{passwordError}</Text>}
           <Button title={authMode==="signup"?"إنشاء حساب العميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy||!isOnline} loading={busy}/>
           {entry==="customer" && <Button secondary title={authMode==="login"?"إنشاء حساب جديد":"لدي حساب بالفعل"} onPress={()=>setAuthMode(authMode==="login"?"signup":"login")}/>}
           <Text style={s.authFoot}>بياناتك تُستخدم لإدارة حسابك وطلبات السفر.</Text>
