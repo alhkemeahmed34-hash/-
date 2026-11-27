@@ -33,9 +33,9 @@ function BrandEmblem({ size=92 }: { size?: number }) {
     <Image source={require("./assets/tasnim-icon.png")} style={{width:"100%",height:"100%"}} resizeMode="contain"/>
   </View>;
 }
-function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false }: any) {
+function Field({ value, onChangeText, placeholder, secureTextEntry, keyboardType, multiline=false, error=false }: any) {
   const isEmail = keyboardType === "email-address";
-  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlign={isEmail ? "left" : "right"} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={isEmail ? "none" : "sentences"} autoCorrect={!isEmail} autoComplete={isEmail ? "email" : "off"} importantForAutofill={isEmail ? "yes" : "auto"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput,isEmail&&s.emailInput]} />;
+  return <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={C.muted} secureTextEntry={secureTextEntry} keyboardType={keyboardType} multiline={multiline} textAlign={isEmail ? "left" : "right"} textAlignVertical={multiline ? "top" : "center"} autoCapitalize={isEmail ? "none" : "sentences"} autoCorrect={!isEmail} autoComplete={isEmail ? "email" : "off"} importantForAutofill={isEmail ? "yes" : "auto"} accessibilityLabel={placeholder} style={[s.input,multiline&&s.multilineInput,isEmail&&s.emailInput,error&&s.inputError]} />;
 }
 function Button({ title, onPress, secondary=false, disabled=false, loading=false }: any) {
   return <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{disabled:disabled||loading,busy:loading}} disabled={disabled||loading} onPress={onPress} style={({pressed})=>[s.button,secondary&&s.secondary,(disabled||loading)&&{opacity:0.55},pressed&&!(disabled||loading)&&{opacity:0.82,transform:[{scale:0.99}]}]}>{loading?<ActivityIndicator color={secondary?C.blue:C.white}/>:<Text style={[s.buttonText,secondary&&{color:C.blue}]}>{title}</Text>}</Pressable>;
@@ -51,7 +51,9 @@ export default function App() {
   const [splashVisible, setSplashVisible] = useState(true);
   const [authMode, setAuthMode] = useState<"login"|"signup">("login");
   const [entry, setEntry] = useState<"customer"|"staff"|null>(null);
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [passwordError,setPasswordError]=useState(""); const [fullName, setFullName] = useState("");
+  const [heroTitle,setHeroTitle]=useState(heroSlides[0].title); const [heroSubtitle,setHeroSubtitle]=useState(heroSlides[0].subtitle); const [heroTitleDraft,setHeroTitleDraft]=useState(""); const [heroSubtitleDraft,setHeroSubtitleDraft]=useState("");
+  const [profileEditOpen,setProfileEditOpen]=useState(false); const [profileNameDraft,setProfileNameDraft]=useState(""); const [editingServiceId,setEditingServiceId]=useState<string|null>(null);
   const [phone, setPhone] = useState(""); const [selected, setSelected] = useState<Service>(services[0]); const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false); const [bookingNotes, setBookingNotes] = useState("");
   const [serviceOpen, setServiceOpen] = useState(false); const [serviceTitle, setServiceTitle] = useState(""); const [serviceDescription, setServiceDescription] = useState(""); const [servicePrice, setServicePrice] = useState(""); const [serviceCategory, setServiceCategory] = useState("umrah");
@@ -62,7 +64,7 @@ export default function App() {
   const permissionLabels: Record<string,string> = {"bookings.read":"عرض الحجوزات","bookings.update":"تحديث الحجوزات","services.read":"عرض الخدمات","services.manage":"إدارة الخدمات والأسعار","customers.read":"عرض بيانات العملاء","reports.read":"عرض التقارير"};
   const [staffPermissions, setStaffPermissions] = useState<string[]>(["bookings.read","bookings.update","services.read"]);
   const [busy, setBusy] = useState(false); const [isOnline,setIsOnline]=useState(true); const [chatMessages,setChatMessages]=useState<any[]>([]); const [chatInput,setChatInput]=useState(""); const [chatBusy,setChatBusy]=useState(false); const [catalog, setCatalog] = useState<any[]>([]); const [tab,setTab]=useState<"home"|"bookings"|"inquiries"|"assistant"|"account">("home"); const [detail,setDetail]=useState<Service|null>(null);
-  const [adminPage,setAdminPage]=useState<"home"|"bookings"|"offers"|"addOffer"|"staff">("home");
+  const [adminPage,setAdminPage]=useState<"home"|"bookings"|"offers"|"addOffer"|"staff"|"homeContent">("home");
   const [catalogLoading,setCatalogLoading]=useState(false); const [catalogError,setCatalogError]=useState("");
   const [bookingsLoading,setBookingsLoading]=useState(false); const [bookingsError,setBookingsError]=useState("");
   const [heroIndex,setHeroIndex]=useState(0);
@@ -138,6 +140,28 @@ export default function App() {
       });
   }, [session]);
 
+  async function loadHomeSettings() {
+    try {
+      const {data,error}=await supabase.from("app_settings").select("value").eq("key","home_hero").maybeSingle();
+      if(error) throw error;
+      if(data?.value?.title) setHeroTitle(String(data.value.title));
+      if(data?.value?.subtitle) setHeroSubtitle(String(data.value.subtitle));
+    } catch(error:any) { console.warn("Could not load home settings",msg(error)); }
+  }
+  async function saveHomeSettings() {
+    if(!heroTitleDraft.trim() || !heroSubtitleDraft.trim()) { Alert.alert("بيانات الواجهة","اكتب العنوان والوصف قبل الحفظ."); return; }
+    setBusy(true);
+    try {
+      const {error}=await supabase.from("app_settings").upsert({key:"home_hero",value:{title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim()},updated_at:new Date().toISOString()},{onConflict:"key"});
+      if(error) throw error;
+      setHeroTitle(heroTitleDraft.trim()); setHeroSubtitle(heroSubtitleDraft.trim());
+      Alert.alert("تم حفظ الواجهة","تم تحديث العنوان والوصف وسيظهران لجميع العملاء.");
+      setAdminPage("home");
+    } catch(error:any) { Alert.alert("تعذر حفظ الواجهة",msg(error)); }
+    finally { setBusy(false); }
+  }
+  useEffect(()=>{ if(isOnline) loadHomeSettings(); },[isOnline]);
+
   async function refreshCatalog() {
     setCatalogLoading(true); setCatalogError("");
     try {
@@ -159,7 +183,8 @@ export default function App() {
 
   async function authenticate() {
     if (!isOnline) { Alert.alert("لا يوجد اتصال بالإنترنت","يرجى إعادة الاتصال بالإنترنت ثم المحاولة."); return; }
-    if (!email.trim() || password.length < 8) { Alert.alert("تحقق من البيانات", "أدخل البريد وكلمة المرور (8 أحرف على الأقل)."); return; }
+    if (!email.trim() || password.length < 8) { setPasswordError(password.length<8?"أدخل كلمة المرور (8 أحرف على الأقل).":""); Alert.alert("تحقق من البيانات", "أدخل البريد وكلمة المرور (8 أحرف على الأقل)."); return; }
+    setPasswordError("");
     setBusy(true);
     try {
       if (authMode === "signup") {
@@ -181,7 +206,13 @@ export default function App() {
           throw new Error("هذا حساب موظف. اختر دخول الموظفين.");
         }
       }
-    } catch (e:any) { Alert.alert("تعذر إكمال العملية", msg(e)); }
+    } catch (e:any) {
+      const errorMessage=msg(e);
+      if(authMode==="login" && /invalid login credentials|invalid email or password/i.test(errorMessage)) {
+        setPasswordError("كلمة المرور خاطئة. تأكد منها وحاول مرة أخرى.");
+        setPassword("");
+      } else Alert.alert("تعذر إكمال العملية", errorMessage);
+    }
     finally { setBusy(false); }
   }
 
@@ -189,7 +220,8 @@ export default function App() {
     if (session) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (entry) { setEntry(null); setAuthMode("login"); return true; }
-      return false;
+      Alert.alert("تسنيم للسياحة والسفريات","أنت في شاشة البداية. استخدم زر الرجوع داخل التطبيق للتنقل.");
+      return true;
     });
     return () => subscription.remove();
   }, [session, entry]);
@@ -211,12 +243,28 @@ export default function App() {
     return () => subscription.remove();
   }, [session, bookingOpen, serviceOpen, staffOpen, isStaff, detail, tab]);
 
+  async function saveProfileName() {
+    const nextName=profileNameDraft.trim();
+    if(!nextName) { Alert.alert("الاسم مطلوب","اكتب اسمك قبل الحفظ."); return; }
+    if(!session) return;
+    setBusy(true);
+    try {
+      const {error:authError}=await supabase.auth.updateUser({data:{full_name:nextName}});
+      if(authError) throw authError;
+      const {error:profileError}=await supabase.from("profiles").update({full_name:nextName,updated_at:new Date().toISOString()}).eq("id",session.user.id);
+      if(profileError) throw profileError;
+      setFullName(nextName); setProfileEditOpen(false);
+      Alert.alert("تم تحديث الاسم","تم حفظ اسمك الجديد في حسابك.");
+    } catch(error:any) { Alert.alert("تعذر تحديث الاسم",msg(error)); }
+    finally { setBusy(false); }
+  }
+
   async function signOut() {
     setBusy(true);
     const {error}=await supabase.auth.signOut();
     setBusy(false);
     if(error){Alert.alert("تعذر تسجيل الخروج",msg(error));return;}
-    setEntry(null); setBookingOpen(false); setStaffOpen(false); setBookings([]); setCatalog([]); setTab("home"); setDetail(null);
+    setEntry(null); setBookingOpen(false); setStaffOpen(false); setBookings([]); setCatalog([]); setTab("home"); setDetail(null); setAdminPage("home"); setProfileEditOpen(false); setEditingServiceId(null);
   }
   async function createBooking() {
     if (!session) return;
@@ -345,7 +393,7 @@ export default function App() {
           <Text style={s.authDescription}>{authMode==="signup"?"أنشئ حسابك لتتمكن من متابعة حجوزاتك.":"سجّل الدخول للوصول إلى حسابك وخدمات تسنيم."}</Text>
           {authMode==="signup" && <><Field value={fullName} onChangeText={setFullName} placeholder="الاسم الكامل"/><Field value={phone} onChangeText={setPhone} placeholder="رقم الهاتف" keyboardType="phone-pad"/></>}
           <Field value={email} onChangeText={setEmail} placeholder="البريد الإلكتروني" keyboardType="email-address"/>
-          <Field value={password} onChangeText={setPassword} placeholder="كلمة المرور" secureTextEntry/>
+          <Field value={password} onChangeText={value=>{setPassword(value);setPasswordError("");}} placeholder="كلمة المرور" secureTextEntry error={!!passwordError}/>{!!passwordError&&<Text style={s.inputErrorText}>{passwordError}</Text}>
           <Button title={authMode==="signup"?"إنشاء حساب العميل":"تسجيل الدخول"} onPress={authenticate} disabled={busy||!isOnline} loading={busy}/>
           {entry==="customer" && <Button secondary title={authMode==="login"?"إنشاء حساب جديد":"لدي حساب بالفعل"} onPress={()=>setAuthMode(authMode==="login"?"signup":"login")}/>}
           <Text style={s.authFoot}>بياناتك تُستخدم لإدارة حسابك وطلبات السفر.</Text>
