@@ -324,14 +324,17 @@ export default function App() {
     if (serviceStartDate && serviceEndDate && serviceEndDate < serviceStartDate) { Alert.alert("التواريخ غير صحيحة", "تاريخ النهاية يجب أن يكون بعد تاريخ البداية."); return; }
     setBusy(true);
     try {
-      const { error } = await supabase.from("travel_services").insert({
+      const servicePayload = {
         category: serviceCategory, title: serviceTitle.trim(), description: serviceDescription.trim(),
         destination: serviceDestination.trim() || null, starts_at: serviceStartDate.trim() || null, ends_at: serviceEndDate.trim() || null,
-        price, currency: "YER", is_active: true, created_by: session?.user.id
-      });
+        price, currency: "YER", is_active: true
+      };
+      const { error } = editingServiceId
+        ? await supabase.from("travel_services").update(servicePayload).eq("id",editingServiceId)
+        : await supabase.from("travel_services").insert({...servicePayload,created_by:session?.user.id});
       if (error) throw error;
-      Alert.alert("تمت إضافة العرض", "تم حفظ العرض وأصبح ظاهراً للعملاء.");
-      setServiceTitle(""); setServiceDescription(""); setServiceDestination(""); setServiceStartDate(""); setServiceEndDate(""); setServicePrice(""); setServiceOpen(false);
+      Alert.alert(editingServiceId?"تم تعديل العرض":"تمت إضافة العرض", "تم حفظ التغييرات وأصبحت ظاهرة للعملاء.");
+      setServiceTitle(""); setServiceDescription(""); setServiceDestination(""); setServiceStartDate(""); setServiceEndDate(""); setServicePrice(""); setEditingServiceId(null);
       await refreshCatalog();
     } catch(error:any) { Alert.alert("تعذر حفظ العرض",msg(error)); }
     finally { setBusy(false); }
