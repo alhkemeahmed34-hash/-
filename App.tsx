@@ -94,13 +94,13 @@ export default function App() {
     if (!session || tab!=="home" || detail) return;
     const timer=setInterval(() => {
       setHeroIndex(current => {
-        const next=(current+1)%heroSlides.length;
+        const next=(current+1)%Math.max(1,bannerSlides.length);
         heroRef.current?.scrollTo({x:next*heroWidth,animated:true});
         return next;
       });
     },5000);
     return () => clearInterval(timer);
-  },[session,tab,detail,heroWidth]);
+  },[session,tab,detail,heroWidth,bannerSlides.length]);
 
   useEffect(() => {
     let mounted = true;
@@ -169,7 +169,7 @@ export default function App() {
     try {
       const {error}=await supabase.from("app_settings").upsert({key:"home_hero",value:{title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim(),image:heroImageDraft.trim()||heroSlides[0].image,serviceImages:Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image||""])),serviceTexts:serviceTextDrafts,slides:[{image:heroImageDraft.trim()||heroSlides[0].image,title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim()},...bannerSlidesDraft.slice(1)],eyebrow:heroEyebrowDraft,cta:heroCtaDraft,textPosition:heroTextPositionDraft,textAlign:heroTextAlignDraft,introTitle:homeIntroTitleDraft,introSubtitle:homeIntroSubtitleDraft,promoTitle:promoTitleDraft,promoSubtitle:promoSubtitleDraft},updated_at:new Date().toISOString()},{onConflict:"key"});
       if(error) throw error;
-      setHeroTitle(heroTitleDraft.trim()); setHeroSubtitle(heroSubtitleDraft.trim()); setHeroImage(heroImageDraft.trim()||heroSlides[0].image); setBannerSlides([{image:heroImageDraft.trim()||heroSlides[0].image,title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim()},...bannerSlidesDraft.slice(1)]); setServiceTexts(serviceTextDrafts); setHeroEyebrow(heroEyebrowDraft); setHeroCta(heroCtaDraft); setHeroTextPosition(heroTextPositionDraft); setHeroTextAlign(heroTextAlignDraft); setHomeIntroTitle(homeIntroTitleDraft); setHomeIntroSubtitle(homeIntroSubtitleDraft); setPromoTitle(promoTitleDraft); setPromoSubtitle(promoSubtitleDraft); setServiceImages(Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image||""])));
+      setHeroIndex(0); setHeroTitle(heroTitleDraft.trim()); setHeroSubtitle(heroSubtitleDraft.trim()); setHeroImage(heroImageDraft.trim()||heroSlides[0].image); setBannerSlides([{image:heroImageDraft.trim()||heroSlides[0].image,title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim()},...bannerSlidesDraft.slice(1)]); setServiceTexts(serviceTextDrafts); setHeroEyebrow(heroEyebrowDraft); setHeroCta(heroCtaDraft); setHeroTextPosition(heroTextPositionDraft); setHeroTextAlign(heroTextAlignDraft); setHomeIntroTitle(homeIntroTitleDraft); setHomeIntroSubtitle(homeIntroSubtitleDraft); setPromoTitle(promoTitleDraft); setPromoSubtitle(promoSubtitleDraft); setServiceImages(Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image||""])));
       Alert.alert("تم حفظ الواجهة","تم تحديث العنوان والوصف وسيظهران لجميع العملاء.");
       setAdminPage("home");
     } catch(error:any) { Alert.alert("تعذر حفظ الواجهة",msg(error)); }
