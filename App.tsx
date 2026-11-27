@@ -423,7 +423,7 @@ export default function App() {
     </ScrollView></KeyboardAvoidingView>
   </SafeAreaView>;
 
-  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}><ScrollView style={{flex:1}} scrollEnabled={tab!=="assistant"} contentContainerStyle={[s.page,tab==="assistant"&&{paddingTop:0,paddingBottom:0,flexGrow:1}]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+  return <SafeAreaView style={s.safe}><StatusBar barStyle="dark-content" backgroundColor={C.pale}/><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}><ScrollView style={{flex:1}} scrollEnabled={tab!=="assistant"} contentContainerStyle={[s.page,tab==="assistant"&&{paddingTop:0,paddingBottom:0,flexGrow:1}]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
     {tab!=="assistant" && <View style={s.top}><View style={s.brandHeader}><BrandEmblem size={46}/><View><Text style={s.brandSmall}>TASNIM TRAVEL</Text><Text style={s.muted}>أهلاً {session.user.user_metadata?.full_name || session.user.email}</Text></View></View><View style={s.avatar}><Text style={s.avatarLetter}>{(session.user.user_metadata?.full_name||"ت").slice(0,1)}</Text></View></View>}
     {isStaff ? <>
       {adminPage==="home" && <>
@@ -539,7 +539,7 @@ export default function App() {
         </ScrollView>
         <Text style={s.chatDisclaimer}>معلومات الأسعار والمواعيد النهائية يؤكدها فريق تسنيم.</Text>
         <View style={s.chatComposer}>
-          <TextInput value={chatInput} onChangeText={setChatInput} placeholder="اكتب رسالتك هنا..." placeholderTextColor="#536779" multiline maxLength={1200} textAlign="right" textAlignVertical="center" returnKeyType="send" blurOnSubmit={false} onSubmitEditing={()=>sendAssistantMessage()} style={s.chatComposerInput}/>
+          <TextInput value={chatInput} onChangeText={setChatInput} onFocus={()=>requestAnimationFrame(()=>chatHistoryRef.current?.scrollToEnd({animated:true}))} placeholder="اكتب رسالتك هنا..." placeholderTextColor="#536779" multiline maxLength={1200} textAlign="right" textAlignVertical="center" returnKeyType="send" blurOnSubmit={false} onSubmitEditing={()=>sendAssistantMessage()} style={s.chatComposerInput}/>
           <Pressable accessibilityRole="button" accessibilityLabel="إرسال الرسالة" onPress={()=>sendAssistantMessage()} disabled={chatBusy||!chatInput.trim()||!isOnline} style={[s.chatSend,(chatBusy||!chatInput.trim()||!isOnline)&&{opacity:0.45}]}><Text style={s.chatSendText}>➤</Text></Pressable>
         </View>
       </View>}
