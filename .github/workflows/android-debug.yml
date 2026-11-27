@@ -68,7 +68,14 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease
+          for attempt in 1 2 3; do
+            if ./gradlew assembleRelease; then exit 0; fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Gradle dependency download failed; retrying in $((attempt * 20)) seconds..."
+              sleep $((attempt * 20))
+            fi
+          done
+          exit 1
       - name: Upload standalone APK
         uses: actions/upload-artifact@v4
         with:
