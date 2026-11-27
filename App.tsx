@@ -158,7 +158,7 @@ export default function App() {
     try {
       const {error}=await supabase.from("app_settings").upsert({key:"home_hero",value:{title:heroTitleDraft.trim(),subtitle:heroSubtitleDraft.trim(),image:heroImageDraft.trim()||heroSlides[0].image,serviceImages:Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image]))},updated_at:new Date().toISOString()},{onConflict:"key"});
       if(error) throw error;
-      setHeroTitle(heroTitleDraft.trim()); setHeroSubtitle(heroSubtitleDraft.trim()); setHeroImage(heroImageDraft.trim()||heroSlides[0].image); setServiceImages(Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image])));
+      setHeroTitle(heroTitleDraft.trim()); setHeroSubtitle(heroSubtitleDraft.trim()); setHeroImage(heroImageDraft.trim()||heroSlides[0].image); setServiceImages(Object.fromEntries(Object.entries(serviceImageDrafts).map(([key,value])=>[key,value.trim()||services.find(x=>x.category===key)?.image||""])));
       Alert.alert("تم حفظ الواجهة","تم تحديث العنوان والوصف وسيظهران لجميع العملاء.");
       setAdminPage("home");
     } catch(error:any) { Alert.alert("تعذر حفظ الواجهة",msg(error)); }
