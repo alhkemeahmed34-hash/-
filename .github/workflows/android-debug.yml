@@ -27,6 +27,17 @@ jobs:
         run: npx tsc --noEmit
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
+      - name: Enable Android release size optimizations
+        working-directory: android
+        run: |
+          {
+            echo ""
+            echo "# Reduce release APK size with R8 and unused-resource shrinking"
+            echo "android.enableMinifyInReleaseBuilds=true"
+            echo "android.enableShrinkResourcesInReleaseBuilds=true"
+          } >> gradle.properties
+          echo "Release optimizations enabled:"
+          tail -n 5 gradle.properties
       - name: Build standalone release APK
         working-directory: android
         run: |
