@@ -2,14 +2,12 @@
   "expo": {
     "name": "TASNIM TRAVEL",
     "slug": "tasnim-travel",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/tasnim-icon.png",
     "splash": {
-      "image": "./assets/tasnim-logo.png",
-      "backgroundColor": "#073F43",
-      "resizeMode": "contain"
+      "backgroundColor": "#0B2F50"
     },
     "newArchEnabled": true,
     "ios": {
@@ -18,7 +16,7 @@
     },
     "android": {
       "package": "com.tasnimtravel.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/tasnim-icon.png",
         "backgroundColor": "#073F43"
